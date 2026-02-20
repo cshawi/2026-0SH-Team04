@@ -3,11 +3,12 @@
 <h2 align="center">[NOM DE CODE]</h2>
 
 # 1. Mise en situation (client)
-Écrire une description de quelques lignes ou de quelques paragraphes représentant la demande du client. Je dois savoir exactement ce que je dois programmer en lisant votre texte.
-> Pas le **comment**, mais le **quoi** !
+Un atelier de production sonore veut refondre son mode de diffusion, car les utilisateurs jonglent avec plusieurs services pour créer, écouter et classer leurs pistes. Tout se fait encore à la main et la recherche de nouveautés prend trop de temps, ce qui dégrade l’expérience.
+
+On confie donc à votre équipe la création d’une application iOS simple : elle devra générer de la musique par IA, permettre l’écoute instantanée et offrir un accès vers des suggestions similaires. Le but est d’obtenir une première version rapidement exploitable, claire et facile à utiliser.
 
 # 2. Preuve de faisabilité technique
-En utilisant tous les outils nécessaires, vous devez convaincre le client que les technologies existent et sont accessibles afin de réaliser le projet décrit en 1.1.
+La réalisation de cette application sur iOS est possible grâce à SwiftUI pour l’interface et AVFoundation pour la lecture audio. La génération musicale peut être déportée sur un service IA accessible via API, puis l’audio est joué localement. Un lien vers des recommandations externes s’intègre facilement dans l’application, ce qui confirme la faisabilité globale.
 
 # 3. Conception
 

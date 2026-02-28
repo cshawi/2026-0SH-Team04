@@ -63,12 +63,19 @@ Responsabilités du backend :
 
 Le système utilisera une API externe de génération musicale basée sur l’intelligence artificielle.
 
+**Combinaison d’outils proposée (voix + paroles + instrumental)** :
+
+- **Paroles** : LLM avec OpenAI pour générer des paroles selon style, humeur et durée.
+- **Instrumental** : MusicGen via API avec Replicate pour la partie musicale.
+- **Voix** : synthèse vocale avec ElevenLabs pour interpréter les paroles.
+- **Mixage** : FFmpeg pour assembler voix + instrumental et produire un MP3/WAV final.
+
 Processus :
 
 1. L’utilisateur sélectionne les paramètres dans l’application iPhone.
 2. L’application envoie une requête HTTPS au backend.
-3. Backend Recherche dans la base de données une musique correspondante et enregistre l'URL du fichier.
-4. Si aucune correspondance, le backend appelle l’API externe de génération musicale avec une clé sécurisée.
+3. Le backend recherche dans la base de données une musique correspondante et enregistre l’URL du fichier.
+4. Si aucune correspondance, le backend appelle l’API externe.
 5. L’API retourne un fichier audio (MP3 ou WAV).
 6. Le backend enregistre l’URL du fichier.
 7. L’application iPhone récupère l’URL.

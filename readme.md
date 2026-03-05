@@ -16,17 +16,17 @@
 
 |  Date |                   Matière en classe                    | Projet                                              |
 | ----: | :----------------------------------------------------: | :-------------------------------------------------- |
-| 02-20 |              Création d'un projet GitHub               | Planification + choix iOS (Swift / SwiftUI)         |
-| 02-27 |                 Documentation d'un Bug                 | Livrable #1 – Architecture iOS + maquettes UI       |
+| 02-20 |              Création d'un projet GitHub               | Planification + choix Android (Kotlin / Jetpack Compose)         |
+| 02-27 |                 Documentation d'un Bug                 | Livrable #1 – Architecture  + maquettes UI       |
 | 03-06 |                        Relâche                         |                                                     |
-| 03-13 |                  Introduction SwiftUI                  | Création interface iPhone (écrans principaux)       |
-| 03-20 |                  Mise en place du projet iOS           | Livrable #2 – Interface mobile fonctionnelle        |
-| 03-27 |               Développement Backend et API             | Implémentation appel backend (URLSession)           |
+| 03-13 |                  Introduction Jetpack Compose               | Création interface Android (écrans principaux)       |
+| 03-20 |                  Mise en place du projet            | Livrable #2 – Interface mobile fonctionnelle        |
+| 03-27 |               Développement Backend et API             | Implémentation appel backend (OkHttp / Retrofit)           |
 | 04-03 |                    Congé de Pâques                     |                                                     |
 | 04-10 |                                | Livrable #3 – Génération musicale fonctionnelle via API |
 | 04-17 |                    Sécurité mobile                     | Authentification utilisateur + stockage sécurisé    |
 | 04-24 |          Tests & optimisations finaux           | Tests finaux + corrections + préparation démo       |
-| 05-01 | Présentation des projets en classe (Épreuve terminale) | Livrable #4 – Version finale iPhone + démonstration |
+| 05-01 | Présentation des projets en classe (Épreuve terminale) | Livrable #4 – Version finale + démonstration |
 
 ---
 

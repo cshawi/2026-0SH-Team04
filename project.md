@@ -376,6 +376,7 @@ Permettre à un utilisateur de :
 
 - **Generation**
   - id
+  - titre
   - style
   - humeur
   - durée

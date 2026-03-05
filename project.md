@@ -6,7 +6,7 @@
 
 **Un atelier de production sonore** reçoit souvent des demandes rapides de musique originale pour des projets (vidéos, jeux, contenu web). Les clients veulent des morceaux personnalisés (style, ambiance, durée), mais la création manuelle prend trop de temps. L’équipe passe beaucoup d’heures à composer, ajuster et livrer des versions, ce qui ralentit les projets et limite le nombre de demandes qu’elle peut accepter.
 
-On confie donc à votre équipe la création d’une application iOS simple : elle devra générer de la musique par IA, permettre l’écoute instantanée et offrir un accès vers des suggestions similaires. Le but est d’obtenir une première version rapidement exploitable, claire et facile à utiliser.
+On confie donc à votre équipe la création d’une application Android simple : elle devra générer de la musique par IA, permettre l’écoute instantanée et offrir un accès vers des suggestions similaires. Le but est d’obtenir une première version rapidement exploitable, claire et facile à utiliser.
 
 ---
 
@@ -14,18 +14,18 @@ On confie donc à votre équipe la création d’une application iOS simple : 
 
 ### 2.1 Faisabilité technique
 
-Le projet SoundWave est techniquement réalisable sous forme d’application mobile native pour iPhone (iOS).
+Le projet SoundWave est techniquement réalisable sous forme d’application mobile native pour Android.
 
 Le développement sera effectué en :
 
-- Langage : Swift
-- Environnement : Xcode
-- Framework UI : SwiftUI
-- Lecteur audio : AVFoundation (framework natif iOS)
+- Langage : Kotlin
+- Environnement : Android Studio
+- Framework UI : Jetpack Compose
+- Lecteur audio : ExoPlayer (framework natif Android)
 
 L’application permettra :
 
-- Interface mobile optimisée iPhone
+- Interface mobile optimisée
 - Formulaire de génération (style, humeur, durée)
 - Lecteur audio intégré
 - Affichage de l’historique
@@ -35,7 +35,7 @@ L’application permettra :
 
 ### 2.2 Backend (Serveur API)
 
-L’application iPhone communiquera avec un serveur backend via API REST.
+L’application Android communiquera avec un serveur backend via API REST.
 
 Technologies :
 
@@ -55,31 +55,28 @@ Responsabilités du backend :
 ### 2.3 Base de données
 
 - MySQL
-- Stockage des utilisateurs, générations et abonnements
+- Stockage des utilisateurs et générations
 
 ---
 
 ### 2.4 Intégration API de génération musicale
 
-Le système utilisera une API externe de génération musicale basée sur l’intelligence artificielle.
+Le système utilisera l’API Suno de génération musicale basée sur l’intelligence artificielle.
 
-**Combinaison d’outils proposée (voix + paroles + instrumental)** :
+**API proposée (voix + paroles + instrumental)** :
 
-- **Paroles** : LLM avec OpenAI pour générer des paroles selon style, humeur et durée.
-- **Instrumental** : MusicGen via API avec Replicate pour la partie musicale.
-- **Voix** : synthèse vocale avec ElevenLabs pour interpréter les paroles.
-- **Mixage** : FFmpeg pour assembler voix + instrumental et produire un MP3/WAV final.
+- **Suno** : génération complète (paroles, voix et instrumental) à partir du style, de l’humeur et de la durée.
 
 Processus :
 
-1. L’utilisateur sélectionne les paramètres dans l’application iPhone.
+1. L’utilisateur sélectionne les paramètres dans l’application.
 2. L’application envoie une requête HTTPS au backend.
 3. Le backend recherche dans la base de données une musique correspondante et enregistre l’URL du fichier.
 4. Si aucune correspondance, le backend appelle l’API externe.
 5. L’API retourne un fichier audio (MP3 ou WAV).
 6. Le backend enregistre l’URL du fichier.
-7. L’application iPhone récupère l’URL.
-8. Lecture du fichier via AVFoundation.
+7. L’application récupère l’URL.
+8. Lecture du fichier via ExoPlayer.
 
 ---
 
@@ -96,7 +93,7 @@ Processus :
 ### 2.6 Performance
 
 - Temps cible de génération : moins de 30 secondes.
-- Requêtes réseau asynchrones (URLSession).
+- Requêtes réseau asynchrones (OkHttp/Retrofit).
 - Indicateur de chargement pendant la génération.
 - Possibilité de mise en cache locale des fichiers récents.
 
@@ -106,13 +103,13 @@ Processus :
 
 - Dépendance à une API externe.
 - Nécessite une connexion Internet stable.
-- Dépendance aux mises à jour iOS.
+- Dépendance aux mises à jour Android.
 
 ---
 
 ### 2.8 Conclusion
 
-Grâce à Swift, SwiftUI et aux frameworks natifs iOS (AVFoundation, URLSession), le projet SoundWave est techniquement réalisable sous forme d’application iPhone dans un délai de 6 à 8 semaines pour une version minimale fonctionnelle.
+Grâce à Kotlin, Jetpack Compose et aux frameworks natifs Android (ExoPlayer, OkHttp/Retrofit), le projet SoundWave est techniquement réalisable sous forme d’application Android dans un délai de 6 à 8 semaines pour une version minimale fonctionnelle.
 
 ---
 
@@ -216,7 +213,7 @@ Permettre à un utilisateur de :
 
 ###  Produit
 
-- Application mobile iOS SoundWave.
+- Application mobile Android SoundWave.
 - Backend Node.js/Express connecté à l’API de génération musicale.
 - Base de données (utilisateurs, générations).
 
@@ -257,8 +254,8 @@ Permettre à un utilisateur de :
 
 ## 3.8 Hypothèses
 
-- Tous les utilisateurs disposent d’un iPhone compatible avec une version récente d’iOS.
-  - **Si faux** : l’application ne pourra pas être installée depuis l’App Store.
+- Tous les utilisateurs disposent d’un téléphone Android compatible avec une version récente d’Android.
+  - **Si faux** : l’application ne pourra pas être installée depuis play Store.
 
 - Les utilisateurs disposent d’une connexion Internet stable pendant l’utilisation.
   - **Si faux** : afficher une erreur réseau et permettre de relancer la génération plus tard.
@@ -294,13 +291,13 @@ Permettre à un utilisateur de :
 
 ### Expérience utilisateur (UX)
 
-- Interface simple, intuitive et adaptée aux standards iOS.
+- Interface simple, intuitive et adaptée aux standards Android.
 - Indicateur de chargement visible lors de la génération.
 - Navigation fluide entre les écrans.
 
 ### Compatibilité
 
-- Compatible avec les iPhone supportant une version récente d’iOS.
+- Compatible avec les appareils Android supportant une version récente d’Android.
 - Optimisée pour différentes tailles d’écran.
 
 ### Testabilité
@@ -385,10 +382,6 @@ Permettre à un utilisateur de :
   - dateGeneration
   - urlFichier
 
-- **Utilisateur_Generation**
-  - id_utilisateur
-  - id_generation
-
 ---
 
 # 4. Planification
@@ -402,16 +395,16 @@ Cette section présente les étapes de réalisation du projet SoundWave, incluan
 ### Étape 1 – Analyse et conception
 - Définition des besoins fonctionnels et non fonctionnels
 - Rédaction des hypothèses
-- Conception de l’architecture (iOS + Backend)
+- Conception de l’architecture (Android + Backend)
 
 Livrable #1 :
 - Document de conception complet
 
 ---
 
-### Étape 2 – Mise en place du projet iOS
-- Création du projet Xcode
-- Configuration SwiftUI
+### Étape 2 – Mise en place du projet Android
+- Création du projet Android Studio
+- Configuration Jetpack Compose
 - Mise en place de la navigation
 - Création des écrans principaux (Accueil, Génération, Connexion)
 
@@ -424,7 +417,7 @@ Livrable #2 :
 - Création des routes API (authentification, génération)
 - Connexion à la base de données
 - Intégration de l’API externe de génération musicale
-- Connexion iPhone ↔ Backend (URLSession)
+- Connexion Android ↔ Backend (OkHttp/Retrofit)
 - Gestion des erreurs
 
 Livrable #3 :
@@ -437,7 +430,7 @@ Livrable #3 :
 - Intégration complète et sécurité
   - Gestion Session sécurisée
   - Sécurisation des requêtes HTTPS
-  - Lecture audio avec AVFoundation
+  - Lecture audio avec ExoPlayer
   - Gestion de l’historique
   
 - Tests et optimisation

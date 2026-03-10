@@ -1,5 +1,8 @@
 package com.example.soundwave.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -46,16 +49,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.soundwave.viewModels.CreateViewModel
 
 @Composable
 fun CreateScreen(createViewModel: CreateViewModel = viewModel()) {
     var showAllStyles by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri ->
+            createViewModel.onImageSelected(uri)
+        }
+    )
 
     Box(
         modifier = Modifier
@@ -121,7 +135,12 @@ fun CreateScreen(createViewModel: CreateViewModel = viewModel()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .clickable {
+                        imagePicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -166,11 +185,23 @@ fun CreateScreen(createViewModel: CreateViewModel = viewModel()) {
                         .background(MaterialTheme.colorScheme.surface),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Image,
-                        contentDescription = "Ajouter une image",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    if (createViewModel.imageUri != null) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(context)
+                                .data(createViewModel.imageUri)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = "Image sélectionnée",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Filled.Image,
+                            contentDescription = "Ajouter une image",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 
@@ -358,7 +389,7 @@ fun CreateScreen(createViewModel: CreateViewModel = viewModel()) {
                 TextField(
                     value = createViewModel.description,
                     onValueChange = { createViewModel.description = it },
-                    placeholder = { Text("Décris ton idée, ton ambiance, ton style...") },
+                    placeholder = { Text(if(createViewModel.isCustomMode && !createViewModel.isInstrumental) "Écrivez vos propres paroles, deux couplets pour un meilleur résultat." else "Décris ton idée, ton ambiance, ton style...") },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -376,6 +407,7 @@ fun CreateScreen(createViewModel: CreateViewModel = viewModel()) {
                         listOf(
                             MaterialTheme.colorScheme.primary,
                             MaterialTheme.colorScheme.secondary,
+                            MaterialTheme.colorScheme.tertiary,
                             MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
                         )
                     )

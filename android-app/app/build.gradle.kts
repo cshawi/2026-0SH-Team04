@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.composeIconsExtended)
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.compose.icons.fontawesome)
+    implementation(libs.coil.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

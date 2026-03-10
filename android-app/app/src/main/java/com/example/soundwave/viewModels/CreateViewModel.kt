@@ -1,5 +1,6 @@
 package com.example.soundwave.viewModels
 
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -21,6 +22,7 @@ class CreateViewModel: ViewModel() {
     var isCustomMode by mutableStateOf(false)
     var title by mutableStateOf("")
     var description by mutableStateOf("")
+    var imageUri by mutableStateOf<Uri?>(null)
 
     val styles = listOf(
         StyleItem("Pop", FontAwesomeIcons.Solid.Music, Color(0xFF7B61FF)),
@@ -33,6 +35,10 @@ class CreateViewModel: ViewModel() {
     )
 
     var selectedStyle by mutableStateOf<StyleItem?>(null)
+
+    fun onImageSelected(uri: Uri?) {
+        imageUri = uri
+    }
 
 
 }

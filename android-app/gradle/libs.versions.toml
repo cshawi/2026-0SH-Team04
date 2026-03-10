@@ -14,6 +14,7 @@ navigationCompose = "2.9.7"
 navigationCommonKtx = "2.9.7"
 uiText = "1.10.4"
 composeIcons = "1.1.0"
+coil = "2.7.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -37,6 +38,7 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 androidx-navigation-common-ktx = { group = "androidx.navigation", name = "navigation-common-ktx", version.ref = "navigationCommonKtx" }
 androidx-compose-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiText" }
 compose-icons-fontawesome = { group = "br.com.devsrsouza.compose.icons", name = "font-awesome", version.ref = "composeIcons" }
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

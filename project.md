@@ -1,18 +1,36 @@
 <p align="center"><img src="./_bin/logo.svg" alt="drawing" width="100"/></p>
 <h4 align="center">0SH - Gestion de projet (2026)</h4>
-<h2 align="center">[NOM DE CODE]</h2>
 
-# 1. Mise en situation (client)
+# Calendrier du projet
 
-**Un atelier de production sonore** reçoit souvent des demandes rapides de musique originale pour des projets (vidéos, jeux, contenu web). Les clients veulent des morceaux personnalisés (style, ambiance, durée), mais la création manuelle prend trop de temps. L’équipe passe beaucoup d’heures à composer, ajuster et livrer des versions, ce qui ralentit les projets et limite le nombre de demandes qu’elle peut accepter.
 
-On confie donc à votre équipe la création d’une application Android simple : elle devra générer de la musique par IA, permettre l’écoute instantanée et offrir un accès vers des suggestions similaires. Le but est d’obtenir une première version rapidement exploitable, claire et facile à utiliser.
+|  Date |                   Matière en classe                    | Projet                                              |
+| ----: | :----------------------------------------------------: | :-------------------------------------------------- |
+| 02-20 |              Création d'un projet GitHub               | Planification + choix Android (Kotlin / Jetpack Compose)         |
+| 02-27 |                 Documentation d'un Bug                 | Livrable #1 – Architecture  + maquettes UI       |
+| 03-06 |                        Relâche                         |                                                     |
+| 03-13 |                  Introduction Jetpack Compose               | Création interface Android (écrans principaux)       |
+| 03-20 |                  Mise en place du projet            | Livrable #2 – Interface mobile fonctionnelle        |
+| 03-27 |               Développement Backend et API             | Implémentation appel backend (OkHttp / Retrofit)           |
+| 04-03 |                    Congé de Pâques                     |                                                     |
+| 04-10 |                                | Livrable #3 – Génération musicale fonctionnelle via API |
+| 04-17 |                    Sécurité mobile                     | Authentification utilisateur + stockage sécurisé    |
+| 04-24 |          Tests & optimisations finaux           | Tests finaux + corrections + préparation démo       |
+| 05-01 | Présentation des projets en classe (Épreuve terminale) | Livrable #4 – Version finale + démonstration |
 
 ---
 
-# 2. Preuve de faisabilité technique
+# 2. Mise en situation (client)
 
-### 2.1 Faisabilité technique
+**Un atelier de production sonore** reçoit souvent des demandes rapides de musique originale pour des projets (vidéos, jeux, contenu web). Les clients veulent des morceaux personnalisés (style, ambiance, durée), mais la création manuelle prend trop de temps. L’équipe passe beaucoup d’heures à composer, ajuster et livrer des versions, ce qui ralentit les projets et limite le nombre de demandes qu’elle peut accepter.
+
+On confie donc à votre équipe la création d’une application Android simple : elle devra générer de la musique par IA, permettre l’écoute instantanée et offrir un accès vers des suggestions similaires. Le but est d’obtenir une première version rapidement exploitable, claire et facile à utiliser.
+
+---
+
+# 3. Preuve de faisabilité technique
+
+### 3.1 Faisabilité technique
 
 Le projet SoundWave est techniquement réalisable sous forme d’application mobile native pour Android.
 
@@ -33,7 +51,7 @@ L’application permettra :
 
 ---
 
-### 2.2 Backend (Serveur API)
+### 3.2 Backend (Serveur API)
 
 L’application Android communiquera avec un serveur backend via API REST.
 
@@ -52,14 +70,14 @@ Responsabilités du backend :
 
 ---
 
-### 2.3 Base de données
+### 3.3 Base de données
 
 - MySQL
 - Stockage des utilisateurs et générations
 
 ---
 
-### 2.4 Intégration API de génération musicale
+### 3.4 Intégration API de génération musicale
 
 Le système utilisera l’API Suno de génération musicale basée sur l’intelligence artificielle.
 
@@ -80,7 +98,7 @@ Processus :
 
 ---
 
-### 2.5 Sécurité
+### 3.5 Sécurité
 
 - Les clés API seront stockées uniquement côté serveur.
 - Communication sécurisée via HTTPS.
@@ -90,7 +108,7 @@ Processus :
 
 ---
 
-### 2.6 Performance
+### 3.6 Performance
 
 - Temps cible de génération : moins de 30 secondes.
 - Requêtes réseau asynchrones (OkHttp/Retrofit).
@@ -99,7 +117,7 @@ Processus :
 
 ---
 
-### 2.7 Contraintes techniques
+### 3.7 Contraintes techniques
 
 - Dépendance à une API externe.
 - Nécessite une connexion Internet stable.
@@ -107,15 +125,15 @@ Processus :
 
 ---
 
-### 2.8 Conclusion
+### 3.8 Conclusion
 
 Grâce à Kotlin, Jetpack Compose et aux frameworks natifs Android (ExoPlayer, OkHttp/Retrofit), le projet SoundWave est techniquement réalisable sous forme d’application Android dans un délai de 6 à 8 semaines pour une version minimale fonctionnelle.
 
 ---
 
-# 3. Conception
+# 4. Conception
 
-## 3.1 Introduction
+## 4.1 Introduction
 
 Le projet consiste à développer une application web/mobile nommée **SoundWave**, permettant aux utilisateurs de générer de la musique automatiquement grâce à une API d’intelligence artificielle.
 
@@ -123,7 +141,7 @@ Contrairement aux plateformes de streaming traditionnelles, SoundWave génère d
 
 **Objectif principal :** permettre de générer une musique personnalisée en moins de 30 secondes.
 
-## 3.2 Besoin
+## 4.2 Besoin
 
 ### Besoin principal
 
@@ -142,7 +160,7 @@ Permettre à un utilisateur de :
 ---
 
 
-## 3.3 Utisateurs et rôles
+## 4.3 Utisateurs et rôles
 
 ### Utilisateur standard
 
@@ -180,7 +198,7 @@ Permettre à un utilisateur de :
 
 ---
 
-## 3.4 Objectifs
+## 4.4 Objectifs
 
 1. Générer une musique en moins de 30 secondes.
 2. Assurer une disponibilité du service 24/7.
@@ -189,7 +207,7 @@ Permettre à un utilisateur de :
 
 ---
 
-## 3.5 Périmètre (Inclus / Exclus)
+## 4.5 Périmètre (Inclus / Exclus)
 
 ### Inclus
 
@@ -209,7 +227,7 @@ Permettre à un utilisateur de :
 
 ---
 
-## 3.6 Livrables attendus
+## 4.6 Livrables attendus
 
 ###  Produit
 
@@ -229,7 +247,7 @@ Permettre à un utilisateur de :
 
 ---
 
-## 3.7 Règles du domaine et validations
+## 4.7 Règles du domaine et validations
 
 ### Règles imposées
 
@@ -252,7 +270,7 @@ Permettre à un utilisateur de :
 
 ---
 
-## 3.8 Hypothèses
+## 4.8 Hypothèses
 
 - Tous les utilisateurs disposent d’un téléphone Android compatible avec une version récente d’Android.
   - **Si faux** : l’application ne pourra pas être installée depuis play Store.
@@ -271,7 +289,7 @@ Permettre à un utilisateur de :
 
 ---
 
-## 3.9 Exigences non fonctionnelles
+## 4.9 Exigences non fonctionnelles
 
 ### Performance
 
@@ -305,7 +323,7 @@ Permettre à un utilisateur de :
 - Tests unitaires pour les appels API.
 - Tests fonctionnels pour la génération et la lecture audio.
 
-## 3.10 Risques majeurs et mitigation
+## 4.10 Risques majeurs et mitigation
 
 ### 1. Dépendance à l’API externe
 
@@ -327,7 +345,7 @@ Permettre à un utilisateur de :
 
 ---
 
-## 3.11 Cas d’utilisation (happy path)
+## 4.11 Cas d’utilisation (happy path)
 
 ### 1 – Générer une musique (Utilisateur standard)
 
@@ -364,7 +382,7 @@ Permettre à un utilisateur de :
 
 ---
 
-## 3.12 Liste et modélisation des entités
+## 4.12 Liste et modélisation des entités
 
 - **Utilisateur**
   - id
@@ -385,13 +403,13 @@ Permettre à un utilisateur de :
 
 ---
 
-# 4. Planification
+# 5. Planification
 
 Cette section présente les étapes de réalisation du projet SoundWave, incluant les livrables ainsi que les paramètres de suivi.
 
 ---
 
-## 4.1 Étapes de réalisation
+## 5.1 Étapes de réalisation
 
 ### Étape 1 – Analyse et conception
 - Définition des besoins fonctionnels et non fonctionnels
@@ -448,7 +466,7 @@ Livrable #4 :
 
 ---
 
-## 4.2 Paramètres de suivi
+## 5.2 Paramètres de suivi
 
 - Respect des délais du calendrier académique
 - Avancement hebdomadaire vérifié sur GitHub

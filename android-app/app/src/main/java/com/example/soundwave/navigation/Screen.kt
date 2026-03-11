@@ -14,4 +14,6 @@ sealed class Screen(
     object Home: Screen("Home", icon = Icons.Default.Home)
     object Create: Screen("Create", icon = Icons.Default.Add)
     object Profile: Screen("Profile", icon = Icons.Default.Person)
+
+    object Player: Screen("Player/{title}/{duration}", icon = Icons.Default.Home)
 }

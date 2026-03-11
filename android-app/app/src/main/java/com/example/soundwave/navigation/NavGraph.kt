@@ -15,6 +15,9 @@ import com.example.soundwave.ui.screens.CreateScreen
 import com.example.soundwave.ui.screens.HomeScreen
 import com.example.soundwave.ui.screens.ProfileScreen
 import com.example.soundwave.ui.theme.SoundWaveBackground
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.example.soundwave.ui.screens.PlayerScreen
 
 @Composable
 fun NavGraph() {
@@ -35,8 +38,9 @@ fun NavGraph() {
                 startDestination = Screen.Home.route,
                 modifier = Modifier.padding(innerPadding)
             ){
+
                 composable(Screen.Home.route) {
-                    HomeScreen()
+                    HomeScreen(navController)
                 }
 
                 composable(Screen.Create.route) {
@@ -46,6 +50,22 @@ fun NavGraph() {
                 composable(Screen.Profile.route) {
                     ProfileScreen()
                 }
+
+                composable(
+                    "Player/{title}/{duration}",
+                    arguments = listOf(
+                        navArgument("title"){ type = NavType.StringType },
+                        navArgument("duration"){ type = NavType.StringType }
+                    )
+                ){
+
+                    val title = it.arguments?.getString("title") ?: ""
+                    val duration = it.arguments?.getString("duration") ?: ""
+
+                    PlayerScreen(title, duration)
+
+                }
+
             }
 
         }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,6 +22,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Image
@@ -32,8 +38,10 @@ import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.AccessTimeFilled
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -44,32 +52,47 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.soundwave.ui.components.AudioPlayerController
 import com.example.soundwave.viewModels.CreateViewModel
 
 @Composable
 fun CreateScreen(createViewModel: CreateViewModel = viewModel()) {
     var showAllStyles by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val loadingTransition = rememberInfiniteTransition(label = "loading")
+    val loadingDotsProgress by loadingTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 3f,
+        animationSpec = infiniteRepeatable(animation = tween(900, easing = LinearEasing)),
+        label = "loadingDots"
+    )
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             createViewModel.onImageSelected(uri)
         }
     )
+
+    LaunchedEffect(Unit) {
+        AudioPlayerController.ensureInitialized(context)
+    }
 
     Box(
         modifier = Modifier
@@ -411,7 +434,8 @@ fun CreateScreen(createViewModel: CreateViewModel = viewModel()) {
                             MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
                         )
                     )
-                ),
+                )
+                .clickable { createViewModel.onGenerateClicked() },
             contentAlignment = Alignment.Center
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -422,9 +446,139 @@ fun CreateScreen(createViewModel: CreateViewModel = viewModel()) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Générer la musique",
+                    text = if (createViewModel.isGenerating) {
+                        val dots = "".padEnd(((loadingDotsProgress.toInt() % 3) + 1), '.')
+                        "Génération en cours$dots"
+                    } else {
+                        "Générer la musique"
+                    },
                     color = Color.White
                 )
+                if (createViewModel.isGenerating) {
+                    Spacer(modifier = Modifier.width(10.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                }
+            }
+        }
+
+        if (createViewModel.generationError != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = createViewModel.generationError ?: "",
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+
+        val generationResult = createViewModel.generationResult
+        if (generationResult != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Résultats générés",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            generationResult.tracks.forEach { track ->
+                val isTrackPlaying = AudioPlayerController.isPlaying &&
+                    AudioPlayerController.currentUrl == track.audioUrl
+                val eqPulse by rememberInfiniteTransition(label = "eqPulse").animateFloat(
+                    initialValue = 0.9f,
+                    targetValue = 1.1f,
+                    animationSpec = infiniteRepeatable(animation = tween(600, easing = LinearEasing)),
+                    label = "eqPulseAnim"
+                )
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            AudioPlayerController.play(context, track.audioUrl, track.title)
+                        },
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(track.imageUrl)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = "Couverture générée",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.matchParentSize()
+                            )
+                            if (isTrackPlaying) {
+                                Box(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .background(Color.Black.copy(alpha = 0.35f))
+                                )
+                                Icon(
+                                    imageVector = Icons.Filled.GraphicEq,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .graphicsLayer(
+                                            scaleX = eqPulse,
+                                            scaleY = eqPulse,
+                                            alpha = 0.9f
+                                        )
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = track.title,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Filled.AccessTimeFilled,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "${track.createdAt} ",
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                        Text(
+                            text = "...",
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier
+                                .offset { IntOffset(0, -30) }
+                                .padding(5.dp, 0.dp),
+                            color = MaterialTheme.colorScheme.onBackground,
+                            maxLines = 1,
+                            softWrap = false
+                        )
+
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
             }
         }
         }

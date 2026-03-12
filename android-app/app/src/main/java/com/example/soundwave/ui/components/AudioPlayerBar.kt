@@ -2,6 +2,7 @@ package com.example.soundwave.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,11 +32,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 
 @Composable
-fun AudioPlayerBar() {
+fun AudioPlayerBar(navController: NavController) {
     val hasTrack = AudioPlayerController.currentTitle != null
     AnimatedVisibility(visible = hasTrack) {
         val durationMs = AudioPlayerController.durationMs
@@ -53,6 +55,9 @@ fun AudioPlayerBar() {
                 .clip(RoundedCornerShape(20.dp))
                 .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
                 .padding(horizontal = 16.dp, vertical = 10.dp)
+                .clickable {
+                    navController.navigate("player/${AudioPlayerController.currentId}")
+                }
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

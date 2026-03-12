@@ -14,9 +14,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 object AudioPlayerController {
+
+    var currentId by mutableStateOf<String?>(null)
+        private set
     var currentUrl by mutableStateOf<String?>(null)
         private set
-
     var currentCoverUrl by mutableStateOf<String?>(null)
         private set
     var currentTitle by mutableStateOf<String?>(null)
@@ -66,9 +68,9 @@ object AudioPlayerController {
         }
     }
 
-    fun play(context: Context, url: String, title: String, cover: String) {
+    fun play(context: Context, url: String, title: String, cover: String, id: String) {
         ensureInitialized(context)
-        if (currentUrl != url) {
+        if (currentId != id) {
             player?.setMediaItem(MediaItem.fromUri(url))
             player?.prepare()
         }
@@ -77,6 +79,7 @@ object AudioPlayerController {
         player?.play()
         isPlaying = true
         currentCoverUrl = cover
+        currentId = id
     }
 
     fun togglePlayPause() {
@@ -98,5 +101,6 @@ object AudioPlayerController {
         currentCoverUrl = null
         durationMs = 0L
         positionMs = 0L
+        currentId = null
     }
 }

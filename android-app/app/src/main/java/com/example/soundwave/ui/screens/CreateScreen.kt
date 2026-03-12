@@ -495,7 +495,7 @@ fun CreateScreen(createViewModel: CreateViewModel = viewModel()) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            AudioPlayerController.play(context, track.audioUrl, track.title, track.imageUrl)
+                            AudioPlayerController.play(context, track.audioUrl, track.title, track.imageUrl, track.id)
                         },
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     shape = RoundedCornerShape(16.dp)

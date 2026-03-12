@@ -18,19 +18,29 @@ import com.example.soundwave.ui.theme.SoundWaveBackground
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.soundwave.ui.screens.PlayerScreen
+import androidx.navigation.compose.currentBackStackEntryAsState
 
 @Composable
 fun NavGraph() {
 
     val navController = rememberNavController()
+    val currentRoute =
+        navController.currentBackStackEntryAsState().value?.destination?.route
     SoundWaveBackground {
         Scaffold(
             containerColor = Color.Transparent,
             bottomBar = {
+
                 Column {
-                    AudioPlayerBar()
+
+                    if (!currentRoute.orEmpty().startsWith("Player")) {
+                        AudioPlayerBar(navController)
+                    }
+
                     BottomNavBar(navController)
+
                 }
+
             }
         ) { innerPadding ->
             NavHost(
@@ -55,7 +65,10 @@ fun NavGraph() {
 
                     val musicId = backStackEntry.arguments?.getString("musicId") ?: ""
 
-                    PlayerScreen(musicId)
+                    PlayerScreen(
+                        musicId = musicId,
+                        navController = navController
+                    )
                 }
 
 

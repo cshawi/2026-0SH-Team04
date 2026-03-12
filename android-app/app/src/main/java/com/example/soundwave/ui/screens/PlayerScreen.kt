@@ -1,6 +1,5 @@
 package com.example.soundwave.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -8,8 +7,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,16 +21,24 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.soundwave.ui.components.AudioPlayerController
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.navigation.NavController
+
 @Composable
-fun PlayerScreen(musicId: String) {
+fun PlayerScreen(musicId: String , navController: NavController) {
 
     val context = LocalContext.current
     val music = musicList.find { it.id == musicId }
     val currentIndex = musicList.indexOfFirst { it.id == musicId }
 
     val isPlaying = AudioPlayerController.isPlaying
+    val duration = AudioPlayerController.durationMs
+    val position = AudioPlayerController.positionMs
+
+    val progress =
+        if (duration > 0) (position.toFloat() / duration.toFloat()).coerceIn(0f,1f)
+        else 0f
 
     Box(
         modifier = Modifier
@@ -51,10 +60,45 @@ fun PlayerScreen(musicId: String) {
                 .padding(30.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ){
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+
+                // ⬅ Retour Home
+                IconButton(
+                    onClick = {
+                        navController.popBackStack()
+                    }
+                ){
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White
+                    )
+                }
+
+                // ❌ Fermer Player
+                IconButton(
+                    onClick = {
+                        AudioPlayerController.stop()
+                        navController.popBackStack()
+                    }
+                ){
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = Color.White
+                    )
+                }
+
+            }
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // 🎵 Image album
             AsyncImage(
                 model = music?.imageUrl,
                 contentDescription = null,
@@ -66,7 +110,6 @@ fun PlayerScreen(musicId: String) {
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // 🎶 Titre
             Text(
                 text = music?.title ?: "",
                 style = MaterialTheme.typography.headlineMedium,
@@ -82,33 +125,37 @@ fun PlayerScreen(musicId: String) {
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // ⏱ Barre de progression (visuelle)
             Slider(
-                value = if (isPlaying) 0.5f else 0f,
+                value = progress,
                 onValueChange = {},
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // ▶ Bouton Play / Pause
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(30.dp)
             ){
 
-                // ⏮ Musique précédente
+                // ⏮ précédent
                 IconButton(
                     onClick = {
 
                         val previous = musicList.getOrNull(currentIndex - 1)
 
                         previous?.let {
+
+                            navController.navigate("player/${it.id}")
+
                             AudioPlayerController.play(
                                 context,
                                 it.audioUrl,
-                                it.title
+                                it.title,
+                                it.imageUrl,
+                                it.id
                             )
+
                         }
 
                     }
@@ -121,7 +168,7 @@ fun PlayerScreen(musicId: String) {
                     )
                 }
 
-                // ▶ Play / Pause
+                // ▶ play pause
                 IconButton(
                     onClick = {
 
@@ -133,7 +180,9 @@ fun PlayerScreen(musicId: String) {
                                 AudioPlayerController.play(
                                     context,
                                     it.audioUrl,
-                                    it.title
+                                    it.title,
+                                    it.imageUrl,
+                                    it.id
                                 )
                             }
 
@@ -159,17 +208,21 @@ fun PlayerScreen(musicId: String) {
 
                 }
 
-                // ⏭ Musique suivante
+                // ⏭ suivant
                 IconButton(
                     onClick = {
 
                         val next = musicList.getOrNull(currentIndex + 1)
 
                         next?.let {
+
+                            navController.navigate("player/${it.id}")
                             AudioPlayerController.play(
                                 context,
                                 it.audioUrl,
-                                it.title
+                                it.title,
+                                it.imageUrl,
+                                it.id
                             )
                         }
 

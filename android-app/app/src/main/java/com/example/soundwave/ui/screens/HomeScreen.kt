@@ -31,34 +31,36 @@ import androidx.compose.ui.layout.ContentScale
 //)
 
 val musicList = listOf(
-    MusicTrack(id = "track_${System.currentTimeMillis()}",
+    MusicTrack(id = "1",
         audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
         imageUrl = "https://www.causeur.fr/wp-content/uploads/2020/12/gims-music-awards.jpg",
         title = "Night Drive",
         duration = 198.44,
         createdAt = "34"),
 
-    MusicTrack(id = "track_${System.currentTimeMillis()}",
+    MusicTrack(id = "2",
+        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+        imageUrl = "https://www.causeur.fr/wp-content/uploads/2020/12/gims-music-awards.jpg",
+        title = "Next play",
+        duration = 198.44,
+        createdAt = "34"),
+
+    MusicTrack(id = "3",
         audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
         imageUrl = "https://www.causeur.fr/wp-content/uploads/2020/12/gims-music-awards.jpg",
         title = "Night Drive",
         duration = 198.44,
         createdAt = "34"),
 
-    MusicTrack(id = "track_${System.currentTimeMillis()}",
-        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        imageUrl = "https://www.causeur.fr/wp-content/uploads/2020/12/gims-music-awards.jpg",
-        title = "Night Drive",
-        duration = 198.44,
-        createdAt = "34"),
-
-    MusicTrack(id = "track_${System.currentTimeMillis()}",
+    MusicTrack(id = "4",
         audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
         imageUrl = "https://www.causeur.fr/wp-content/uploads/2020/12/gims-music-awards.jpg",
         title = "Night Drive",
         duration = 198.44,
         createdAt = "34")
 )
+
+
 
 @Composable
 fun TopBar(){

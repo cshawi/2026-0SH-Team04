@@ -16,14 +16,48 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalContext
+import com.example.soundwave.models.MusicTrack
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 
-data class Music(val title:String, val duration:String)
+
+
+//val musicList = listOf(
+//    Music("Night Drive","2:47"),
+//    Music("Chill Vibes","3:12"),
+//    Music("Electro Dream","2:29"),
+//    Music("Sunset Lo-Fi","2:51")
+//)
 
 val musicList = listOf(
-    Music("Night Drive","2:47"),
-    Music("Chill Vibes","3:12"),
-    Music("Electro Dream","2:29"),
-    Music("Sunset Lo-Fi","2:51")
+    MusicTrack(id = "track_${System.currentTimeMillis()}",
+        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+        imageUrl = "https://www.causeur.fr/wp-content/uploads/2020/12/gims-music-awards.jpg",
+        title = "Night Drive",
+        duration = 198.44,
+        createdAt = "34"),
+
+    MusicTrack(id = "track_${System.currentTimeMillis()}",
+        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+        imageUrl = "https://www.causeur.fr/wp-content/uploads/2020/12/gims-music-awards.jpg",
+        title = "Night Drive",
+        duration = 198.44,
+        createdAt = "34"),
+
+    MusicTrack(id = "track_${System.currentTimeMillis()}",
+        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+        imageUrl = "https://www.causeur.fr/wp-content/uploads/2020/12/gims-music-awards.jpg",
+        title = "Night Drive",
+        duration = 198.44,
+        createdAt = "34"),
+
+    MusicTrack(id = "track_${System.currentTimeMillis()}",
+        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+        imageUrl = "https://www.causeur.fr/wp-content/uploads/2020/12/gims-music-awards.jpg",
+        title = "Night Drive",
+        duration = 198.44,
+        createdAt = "34")
 )
 
 @Composable
@@ -69,7 +103,7 @@ fun TopBar(){
 fun HomeScreen(navController: NavController) {
 
     var searchText by remember { mutableStateOf("") }
-
+    val context = LocalContext.current
     val filteredMusic = musicList.filter {
         it.title.contains(searchText, ignoreCase = true)
     }
@@ -183,7 +217,7 @@ fun Section(title:String){
 }
 
 @Composable
-fun MusicRow(musics: List<Music>, navController: NavController){
+fun MusicRow(musics: List<MusicTrack>, navController: NavController){
 
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -196,41 +230,47 @@ fun MusicRow(musics: List<Music>, navController: NavController){
     }
 
 }
-
 @Composable
-fun MusicCard(music: Music, navController: NavController){
+fun MusicCard(music: MusicTrack, navController: NavController){
 
-    Card(
+    Column(
         modifier = Modifier
-            .width(200.dp)
-            .height(140.dp)
+            .width(170.dp)
             .clickable {
-                navController.navigate("Player/${music.title}/${music.duration}")},
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF32176D)
-
-        )
+                navController.navigate("player/${music.id}")
+            }
     ){
 
-        Column(
+        Card(
+            shape = RoundedCornerShape(16.dp),
             modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+                .fillMaxWidth()
+                .aspectRatio(1f)   // image carrée
         ){
 
-            Text(
-                music.title,
-                color = Color.White
-            )
-
-            Text(
-                music.duration,
-                color = Color.LightGray
+            AsyncImage(
+                model = music.imageUrl,
+                contentDescription = music.title,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
             )
 
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = music.title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color.White,
+            maxLines = 1
+        )
+
+        Text(
+            text = "${music.duration.toInt()} sec",
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.LightGray
+        )
 
     }
 

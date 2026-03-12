@@ -51,20 +51,13 @@ fun NavGraph() {
                     ProfileScreen()
                 }
 
-                composable(
-                    "Player/{title}/{duration}",
-                    arguments = listOf(
-                        navArgument("title"){ type = NavType.StringType },
-                        navArgument("duration"){ type = NavType.StringType }
-                    )
-                ){
+                composable("Player/{musicId}") { backStackEntry ->
 
-                    val title = it.arguments?.getString("title") ?: ""
-                    val duration = it.arguments?.getString("duration") ?: ""
+                    val musicId = backStackEntry.arguments?.getString("musicId") ?: ""
 
-                    PlayerScreen(title, duration)
-
+                    PlayerScreen(musicId)
                 }
+
 
             }
 

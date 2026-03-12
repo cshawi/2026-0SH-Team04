@@ -7,16 +7,30 @@ import androidx.compose.runtime.setValue
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 object AudioPlayerController {
     var currentUrl by mutableStateOf<String?>(null)
+        private set
+
+    var currentCoverUrl by mutableStateOf<String?>(null)
         private set
     var currentTitle by mutableStateOf<String?>(null)
         private set
     var isPlaying by mutableStateOf(false)
         private set
+    var durationMs by mutableStateOf(0L)
+        private set
+    var positionMs by mutableStateOf(0L)
+        private set
 
     private var player: ExoPlayer? = null
+    private var progressJob: Job? = null
+    private val scope = CoroutineScope(Dispatchers.Main.immediate)
 
     fun ensureInitialized(context: Context) {
         if (player != null) return
@@ -26,11 +40,33 @@ object AudioPlayerController {
                 override fun onIsPlayingChanged(isPlayingNow: Boolean) {
                     this@AudioPlayerController.isPlaying = isPlayingNow
                 }
+
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    durationMs = (player?.duration ?: 0L).coerceAtLeast(0L)
+                }
             })
+        }
+        startProgressUpdates()
+    }
+
+    private fun startProgressUpdates() {
+        if (progressJob != null) return
+        progressJob = scope.launch {
+            while (true) {
+                val exo = player
+                if (exo != null) {
+                    durationMs = exo.duration.coerceAtLeast(0L)
+                    positionMs = exo.currentPosition.coerceAtLeast(0L)
+                } else {
+                    durationMs = 0L
+                    positionMs = 0L
+                }
+                delay(500L)
+            }
         }
     }
 
-    fun play(context: Context, url: String, title: String) {
+    fun play(context: Context, url: String, title: String, cover: String) {
         ensureInitialized(context)
         if (currentUrl != url) {
             player?.setMediaItem(MediaItem.fromUri(url))
@@ -40,6 +76,7 @@ object AudioPlayerController {
         currentTitle = title
         player?.play()
         isPlaying = true
+        currentCoverUrl = cover
     }
 
     fun togglePlayPause() {
@@ -56,5 +93,10 @@ object AudioPlayerController {
     fun stop() {
         player?.stop()
         isPlaying = false
+        currentTitle = null
+        currentUrl = null
+        currentCoverUrl = null
+        durationMs = 0L
+        positionMs = 0L
     }
 }

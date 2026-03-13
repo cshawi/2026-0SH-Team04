@@ -32,7 +32,7 @@ On confie donc à votre équipe la création d’une application Android simple 
 
 ### 3.1 Faisabilité technique
 
-Le projet SoundWave est techniquement réalisable sous forme d’application mobile native pour Android.
+Le projet SoundOfSoul est techniquement réalisable sous forme d’application mobile native pour Android.
 
 Le développement sera effectué en :
 
@@ -127,7 +127,7 @@ Processus :
 
 ### 3.8 Conclusion
 
-Grâce à Kotlin, Jetpack Compose et aux frameworks natifs Android (ExoPlayer, OkHttp/Retrofit), le projet SoundWave est techniquement réalisable sous forme d’application Android dans un délai de 6 à 8 semaines pour une version minimale fonctionnelle.
+Grâce à Kotlin, Jetpack Compose et aux frameworks natifs Android (ExoPlayer, OkHttp/Retrofit), le projet SoundOfSoul est techniquement réalisable sous forme d’application Android dans un délai de 6 à 8 semaines pour une version minimale fonctionnelle.
 
 ---
 
@@ -135,9 +135,9 @@ Grâce à Kotlin, Jetpack Compose et aux frameworks natifs Android (ExoPlayer, O
 
 ## 4.1 Introduction
 
-Le projet consiste à développer une application web/mobile nommée **SoundWave**, permettant aux utilisateurs de générer de la musique automatiquement grâce à une API d’intelligence artificielle.
+Le projet consiste à développer une application web/mobile nommée **SoundOfSoul**, permettant aux utilisateurs de générer de la musique automatiquement grâce à une API d’intelligence artificielle.
 
-Contrairement aux plateformes de streaming traditionnelles, SoundWave génère des morceaux uniques selon les préférences de l’utilisateur (style, humeur, tempo, durée).
+Contrairement aux plateformes de streaming traditionnelles, SoundOfSoul génère des morceaux uniques selon les préférences de l’utilisateur (style, humeur, tempo, durée).
 
 **Objectif principal :** permettre de générer une musique personnalisée en moins de 30 secondes.
 
@@ -231,7 +231,7 @@ Permettre à un utilisateur de :
 
 ###  Produit
 
-- Application mobile Android SoundWave.
+- Application mobile Android SoundOfSoul.
 - Backend Node.js/Express connecté à l’API de génération musicale.
 - Base de données (utilisateurs, générations).
 
@@ -405,7 +405,7 @@ Permettre à un utilisateur de :
 
 # 5. Planification
 
-Cette section présente les étapes de réalisation du projet SoundWave, incluant les livrables ainsi que les paramètres de suivi.
+Cette section présente les étapes de réalisation du projet SoundOfSoul, incluant les livrables ainsi que les paramètres de suivi.
 
 ---
 

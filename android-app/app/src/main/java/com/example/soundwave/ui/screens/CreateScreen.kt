@@ -1,4 +1,4 @@
-package com.example.soundwave.ui.components.screens
+package com.example.soundwave.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest

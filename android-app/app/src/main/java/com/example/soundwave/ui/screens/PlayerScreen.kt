@@ -1,4 +1,4 @@
-package com.example.soundwave.ui.components.screens
+package com.example.soundwave.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -22,7 +22,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.soundwave.ui.components.AudioPlayerController
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.navigation.NavController
 

@@ -1,4 +1,4 @@
-package com.example.soundwave.ui.components.screens
+package com.example.soundwave.ui.screens
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable

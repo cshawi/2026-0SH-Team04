@@ -11,13 +11,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.soundwave.ui.components.AudioPlayerBar
 import com.example.soundwave.ui.components.BottomNavBar
-import com.example.soundwave.ui.screens.CreateScreen
-import com.example.soundwave.ui.screens.HomeScreen
-import com.example.soundwave.ui.screens.ProfileScreen
+import com.example.soundwave.ui.components.screens.CreateScreen
+import com.example.soundwave.ui.components.screens.HomeScreen
+import com.example.soundwave.ui.components.screens.ProfileScreen
 import com.example.soundwave.ui.theme.SoundWaveBackground
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
-import com.example.soundwave.ui.screens.PlayerScreen
+import com.example.soundwave.ui.components.screens.PlayerScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
 
 @Composable

@@ -1,10 +1,11 @@
-package com.example.soundwave.ui.screens
+package com.example.soundwave.ui.components.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
@@ -68,14 +69,15 @@ fun PlayerScreen(musicId: String , navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically
             ){
 
-                // ⬅ Retour Home
                 IconButton(
                     onClick = {
-                        navController.popBackStack()
+                        navController.navigate("home") {
+                            popUpTo("home") { inclusive = false }
+                        }
                     }
                 ){
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         tint = Color.White
                     )
@@ -85,8 +87,10 @@ fun PlayerScreen(musicId: String , navController: NavController) {
                 IconButton(
                     onClick = {
                         AudioPlayerController.stop()
-                        navController.popBackStack()
+                        navController.navigate("home") {
+                            popUpTo("home") { inclusive = false }
                     }
+                }
                 ){
                     Icon(
                         imageVector = Icons.Default.Close,

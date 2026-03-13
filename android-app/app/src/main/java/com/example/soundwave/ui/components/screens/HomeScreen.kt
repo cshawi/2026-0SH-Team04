@@ -1,4 +1,4 @@
-package com.example.soundwave.ui.screens
+package com.example.soundwave.ui.components.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -31,6 +31,50 @@ import androidx.compose.ui.layout.ContentScale
 //)
 
 val musicList = listOf(
+    MusicTrack(
+        id = "5",
+        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+        imageUrl = "https://images.unsplash.com/photo-1508704019882-f9cf40e475b4",
+        title = "Chill Waves",
+        duration = 210.20,
+        createdAt = "34"
+    ),
+
+    MusicTrack(
+        id = "6",
+        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+        imageUrl = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4",
+        title = "Ocean Beats",
+        duration = 184.15,
+        createdAt = "34"
+    ),
+
+    MusicTrack(
+        id = "7",
+        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+        imageUrl = "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f",
+        title = "Night Lights",
+        duration = 220.50,
+        createdAt = "34"
+    ),
+
+    MusicTrack(
+        id = "8",
+        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+        imageUrl = "https://images.unsplash.com/photo-1511379938547-c1f69419868d",
+        title = "Lo-Fi Dreams",
+        duration = 176.80,
+        createdAt = "34"
+    ),
+
+    MusicTrack(
+        id = "9",
+        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
+        imageUrl = "https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2",
+        title = "Midnight Groove",
+        duration = 205.10,
+        createdAt = "34"
+    ),
     MusicTrack(id = "1",
         audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
         imageUrl = "https://www.causeur.fr/wp-content/uploads/2020/12/gims-music-awards.jpg",
@@ -63,7 +107,7 @@ val musicList = listOf(
 
 
 @Composable
-fun TopBar(){
+fun TopBar(navController: NavController){
 
     Row(
         modifier = Modifier
@@ -85,7 +129,10 @@ fun TopBar(){
                 .background(
                     Color(0xFF9C4DFF),
                     shape = RoundedCornerShape(50)
-                ),
+                )
+                .clickable {
+                    navController.navigate("profile")
+                },
             contentAlignment = Alignment.Center
         ){
 
@@ -114,15 +161,15 @@ fun HomeScreen(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFF1A0933),
-                        Color(0xFF2E0F5A),
-                        Color(0xFF120421)
-                    )
-                )
-            )
+//            .background(
+//                Brush.verticalGradient(
+//                    listOf(
+//                        Color(0xFF1A0933),
+//                        Color(0xFF2E0F5A),
+//                        Color(0xFF120421)
+//                    )
+//                )
+//            )
     ) {
 
         Column(
@@ -131,7 +178,7 @@ fun HomeScreen(navController: NavController) {
                 .padding(20.dp)
         ) {
 
-            TopBar()
+            TopBar(navController)
             Header()
 
             Spacer(modifier = Modifier.height(15.dp))

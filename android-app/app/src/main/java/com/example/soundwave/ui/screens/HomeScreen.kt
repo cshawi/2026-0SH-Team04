@@ -15,93 +15,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import com.example.soundwave.models.MusicTrack
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.soundwave.navigation.Screen
+import com.example.soundwave.ui.components.AudioPlayerController
+import com.example.soundwave.viewModels.HomeViewModel
 
 
 
-//val musicList = listOf(
-//    Music("Night Drive","2:47"),
-//    Music("Chill Vibes","3:12"),
-//    Music("Electro Dream","2:29"),
-//    Music("Sunset Lo-Fi","2:51")
-//)
-
-val musicList = listOf(
-    MusicTrack(
-        id = "5",
-        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-        imageUrl = "https://images.unsplash.com/photo-1508704019882-f9cf40e475b4",
-        title = "Chill Waves",
-        duration = 210.20,
-        createdAt = "34"
-    ),
-
-    MusicTrack(
-        id = "6",
-        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-        imageUrl = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4",
-        title = "Ocean Beats",
-        duration = 184.15,
-        createdAt = "34"
-    ),
-
-    MusicTrack(
-        id = "7",
-        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
-        imageUrl = "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f",
-        title = "Night Lights",
-        duration = 220.50,
-        createdAt = "34"
-    ),
-
-    MusicTrack(
-        id = "8",
-        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
-        imageUrl = "https://images.unsplash.com/photo-1511379938547-c1f69419868d",
-        title = "Lo-Fi Dreams",
-        duration = 176.80,
-        createdAt = "34"
-    ),
-
-    MusicTrack(
-        id = "9",
-        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
-        imageUrl = "https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2",
-        title = "Midnight Groove",
-        duration = 205.10,
-        createdAt = "34"
-    ),
-    MusicTrack(id = "1",
-        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        imageUrl = "https://www.causeur.fr/wp-content/uploads/2020/12/gims-music-awards.jpg",
-        title = "Night Drive",
-        duration = 198.44,
-        createdAt = "34"),
-
-    MusicTrack(id = "2",
-        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        imageUrl = "https://www.causeur.fr/wp-content/uploads/2020/12/gims-music-awards.jpg",
-        title = "Next play",
-        duration = 198.44,
-        createdAt = "34"),
-
-    MusicTrack(id = "3",
-        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        imageUrl = "https://www.causeur.fr/wp-content/uploads/2020/12/gims-music-awards.jpg",
-        title = "Night Drive",
-        duration = 198.44,
-        createdAt = "34"),
-
-    MusicTrack(id = "4",
-        audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        imageUrl = "https://www.causeur.fr/wp-content/uploads/2020/12/gims-music-awards.jpg",
-        title = "Night Drive",
-        duration = 198.44,
-        createdAt = "34")
-)
 
 
 
@@ -130,7 +56,7 @@ fun TopBar(navController: NavController){
                     shape = RoundedCornerShape(50)
                 )
                 .clickable {
-                    navController.navigate("profile")
+                    navController.navigate(Screen.Profile.route)
                 },
             contentAlignment = Alignment.Center
         ){
@@ -148,27 +74,18 @@ fun TopBar(navController: NavController){
 }
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(
+    navController: NavController,
+    homeViewModel: HomeViewModel = viewModel()
+) {
 
-    var searchText by remember { mutableStateOf("") }
-    val context = LocalContext.current
-    val filteredMusic = musicList.filter {
-        it.title.contains(searchText, ignoreCase = true)
-    }
+    val searchText = homeViewModel.searchText.value
+    val filteredMusic = homeViewModel.getFilteredMusic()
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-//            .background(
-//                Brush.verticalGradient(
-//                    listOf(
-//                        Color(0xFF1A0933),
-//                        Color(0xFF2E0F5A),
-//                        Color(0xFF120421)
-//                    )
-//                )
-//            )
     ) {
 
         Column(
@@ -182,12 +99,6 @@ fun HomeScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(15.dp))
 
-            SearchBar(
-                searchText = searchText,
-                onValueChange = { searchText = it }
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
 
             Section("Recommandations")
             MusicRow(filteredMusic , navController)
@@ -200,12 +111,12 @@ fun HomeScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(25.dp))
 
             Section("Découvrir")
-            GenreList()
+            DiscoverList(filteredMusic, navController)
 
             Spacer(modifier = Modifier.height(25.dp))
 
             Section("🔥 Tendances")
-            TrendButtons()
+            TrendButtons(navController)
 
         }
 
@@ -233,24 +144,7 @@ fun Header(){
 
 }
 
-@Composable
-fun SearchBar(searchText:String,onValueChange:(String)->Unit){
 
-    TextField(
-        value = searchText,
-        onValueChange = onValueChange,
-        placeholder = { Text("Rechercher une musique") },
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(30.dp),
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFF2A1660),
-            unfocusedContainerColor = Color(0xFF2A1660),
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White
-        )
-    )
-
-}
 
 @Composable
 fun Section(title:String){
@@ -259,7 +153,7 @@ fun Section(title:String){
         text = title,
         style = MaterialTheme.typography.titleMedium,
         color = Color.White,
-        modifier = Modifier.padding(bottom = 10.dp)
+        modifier = Modifier.padding(bottom = 15.dp)
     )
 
 }
@@ -281,11 +175,18 @@ fun MusicRow(musics: List<MusicTrack>, navController: NavController){
 @Composable
 fun MusicCard(music: MusicTrack, navController: NavController){
 
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .width(170.dp)
             .clickable {
-                navController.navigate("player/${music.id}")
+                AudioPlayerController.play(
+                    context,
+                    music.audioUrl,
+                    music.title,
+                    music.imageUrl,
+                    music.id
+                )
             }
     ){
 
@@ -293,7 +194,7 @@ fun MusicCard(music: MusicTrack, navController: NavController){
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1f)   // image carrée
+                .aspectRatio(1f)
         ){
 
             AsyncImage(
@@ -324,51 +225,114 @@ fun MusicCard(music: MusicTrack, navController: NavController){
 
 }
 
+
+
 @Composable
-fun GenreList(){
+fun DiscoverList(
+    musics: List<MusicTrack>,
+    navController: NavController
+){
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ){
 
-        GenreItem("Neon Groove","3:35")
-        GenreItem("Soulful Chill","2:58")
-        GenreItem("Cosmic Voyage","3:20")
+        musics.take(4).forEach { music ->
+            DiscoverItem(music, navController)
+        }
 
     }
 
 }
 
 @Composable
-fun GenreItem(title:String, duration:String){
+fun DiscoverItem(music: MusicTrack, navController: NavController){
 
+    val context = LocalContext.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                Color(0xFF2E1A63),
-                RoundedCornerShape(14.dp)
+                Color(0xFF1E1E2E),
+                RoundedCornerShape(18.dp)
             )
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .clickable {
+                navController.navigate("player/${music.id}")
+            }
+            .padding(16.dp),
+
         verticalAlignment = Alignment.CenterVertically
     ){
 
-        Column {
+        AsyncImage(
+            model = music.imageUrl,
+            contentDescription = music.title,
+            modifier = Modifier
+                .size(64.dp)
+                .clip(RoundedCornerShape(12.dp)),
+            contentScale = ContentScale.Crop
+        )
 
-            Text(title, color = Color.White)
+        Spacer(modifier = Modifier.width(14.dp))
 
-            Text(duration, color = Color.LightGray)
+        Column(
+            modifier = Modifier.weight(1f)
+        ){
+
+            Text(
+                text = music.title,
+                color = Color.White,
+                style = MaterialTheme.typography.bodyLarge
+            )
+
+            Text(
+                text = "${music.duration.toInt()} sec",
+                color = Color(0xFFA0A0B5),
+                style = MaterialTheme.typography.bodySmall
+            )
 
         }
 
         Button(
-            onClick = {},
+            onClick = {
+                AudioPlayerController.play(
+                    context,
+                    music.audioUrl,
+                    music.title,
+                    music.imageUrl,
+                    music.id
+                )
+            },
+            shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF9C4DFF)
-            )
-        ) {
-            Text("Play")
+                containerColor = Color.Transparent
+            ),
+            contentPadding = PaddingValues()
+        ){
+
+            Box(
+                modifier = Modifier
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                Color(0xFF4FACFE),
+                                Color(0xFF7B61FF),
+                                Color(0xFF9F5DE2)
+                            )
+                        ),
+                        RoundedCornerShape(50)
+                    )
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ){
+
+                Text(
+                    "Play",
+                    color = Color.White
+                )
+
+            }
+
         }
 
     }
@@ -376,23 +340,44 @@ fun GenreItem(title:String, duration:String){
 }
 
 @Composable
-fun TrendButtons(){
+fun TrendButtons(navController: NavController){
 
     Button(
-        onClick = {},
+        onClick = {
+            navController.navigate(Screen.Create.route)
+        },
         modifier = Modifier
             .fillMaxWidth()
             .height(60.dp),
         shape = RoundedCornerShape(30.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF9C4DFF)
-        )
+            containerColor = Color.Transparent
+        ),
+        contentPadding = PaddingValues()
     ){
 
-        Text(
-            "🎤 Générer une chanson",
-            color = Color.White
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            Color(0xFF36D1DC),
+                            Color(0xFF5B86E5)
+                        )
+                    ),
+                    RoundedCornerShape(30.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ){
+
+            Text(
+                "🎤 Générer une chanson",
+                color = Color.White,
+                style = MaterialTheme.typography.bodyLarge
+            )
+
+        }
 
     }
 

@@ -6,10 +6,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,15 +17,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.soundwave.ui.components.AudioPlayerController
-import androidx.compose.material.icons.filled.Close
-import androidx.navigation.NavController
+import com.example.soundwave.viewModels.HomeViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun PlayerScreen(musicId: String , navController: NavController) {
+fun PlayerScreen(
+    musicId: String,
+    navController: NavController,
+    homeViewModel: HomeViewModel = viewModel()
+) {
 
     val context = LocalContext.current
+    val musicList = homeViewModel.musicList
+
     val music = musicList.find { it.id == musicId }
     val currentIndex = musicList.indexOfFirst { it.id == musicId }
 
@@ -37,7 +41,8 @@ fun PlayerScreen(musicId: String , navController: NavController) {
     val position = AudioPlayerController.positionMs
 
     val progress =
-        if (duration > 0) (position.toFloat() / duration.toFloat()).coerceIn(0f,1f)
+        if (duration > 0)
+            (position.toFloat() / duration.toFloat()).coerceIn(0f,1f)
         else 0f
 
     Box(
@@ -46,27 +51,28 @@ fun PlayerScreen(musicId: String , navController: NavController) {
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        Color(0xFF1A0933),
-                        Color(0xFF2E0F5A),
-                        Color(0xFF120421)
+                        Color(0xFF0F0F1A),
+                        Color(0xFF151525),
+                        Color(0xFF0A0A12)
                     )
                 )
             )
-    ){
+    ) {
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(30.dp),
             horizontalAlignment = Alignment.CenterHorizontally
-        ){
+        ) {
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 20.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
-            ){
+            ) {
 
                 IconButton(
                     onClick = {
@@ -74,7 +80,7 @@ fun PlayerScreen(musicId: String , navController: NavController) {
                             popUpTo("home") { inclusive = false }
                         }
                     }
-                ){
+                ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
@@ -82,15 +88,14 @@ fun PlayerScreen(musicId: String , navController: NavController) {
                     )
                 }
 
-                // ❌ Fermer Player
                 IconButton(
                     onClick = {
                         AudioPlayerController.stop()
                         navController.navigate("home") {
                             popUpTo("home") { inclusive = false }
+                        }
                     }
-                }
-                ){
+                ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
@@ -130,18 +135,39 @@ fun PlayerScreen(musicId: String , navController: NavController) {
 
             Slider(
                 value = progress,
-                onValueChange = {},
+                onValueChange = { newValue ->
+
+                    val newPosition = (newValue * duration).toLong()
+                    AudioPlayerController.seekTo(newPosition)
+
+                },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ){
+
+                Text(
+                    text = formatTime(position),
+                    color = Color.LightGray
+                )
+
+                Text(
+                    text = formatTime(duration),
+                    color = Color.LightGray
+                )
+
+            }
 
             Spacer(modifier = Modifier.height(40.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(30.dp)
-            ){
+            ) {
 
-                // ⏮ précédent
                 IconButton(
                     onClick = {
 
@@ -158,11 +184,10 @@ fun PlayerScreen(musicId: String , navController: NavController) {
                                 it.imageUrl,
                                 it.id
                             )
-
                         }
 
                     }
-                ){
+                ) {
                     Icon(
                         Icons.Default.SkipPrevious,
                         contentDescription = null,
@@ -171,7 +196,6 @@ fun PlayerScreen(musicId: String , navController: NavController) {
                     )
                 }
 
-                // ▶ play pause
                 IconButton(
                     onClick = {
 
@@ -195,10 +219,16 @@ fun PlayerScreen(musicId: String , navController: NavController) {
                     modifier = Modifier
                         .size(80.dp)
                         .background(
-                            Color(0xFF9C4DFF),
+                            Brush.horizontalGradient(
+                                listOf(
+                                    Color(0xFF4FACFE),
+                                    Color(0xFF7B61FF),
+                                    Color(0xFF9F5DE2)
+                                )
+                            ),
                             CircleShape
                         )
-                ){
+                ) {
 
                     Icon(
                         imageVector =
@@ -211,7 +241,6 @@ fun PlayerScreen(musicId: String , navController: NavController) {
 
                 }
 
-                // ⏭ suivant
                 IconButton(
                     onClick = {
 
@@ -220,6 +249,7 @@ fun PlayerScreen(musicId: String , navController: NavController) {
                         next?.let {
 
                             navController.navigate("player/${it.id}")
+
                             AudioPlayerController.play(
                                 context,
                                 it.audioUrl,
@@ -230,7 +260,7 @@ fun PlayerScreen(musicId: String , navController: NavController) {
                         }
 
                     }
-                ){
+                ) {
                     Icon(
                         Icons.Default.SkipNext,
                         contentDescription = null,
@@ -244,5 +274,15 @@ fun PlayerScreen(musicId: String , navController: NavController) {
         }
 
     }
+
+}
+
+fun formatTime(ms: Long): String {
+
+    val totalSeconds = ms / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+
+    return "%d:%02d".format(minutes, seconds)
 
 }

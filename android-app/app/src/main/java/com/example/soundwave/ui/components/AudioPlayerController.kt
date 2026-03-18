@@ -115,4 +115,7 @@ object AudioPlayerController {
         positionMs = 0L
         currentId = null
     }
+    fun seekTo(position: Long) {
+        player?.seekTo(position)
+    }
 }

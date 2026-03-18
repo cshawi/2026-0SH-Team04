@@ -6,6 +6,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -17,6 +19,7 @@ import com.example.soundwave.ui.screens.ProfileScreen
 import com.example.soundwave.ui.theme.SoundWaveBackground
 import com.example.soundwave.ui.screens.PlayerScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.soundwave.viewModels.CreateViewModel
 
 @Composable
 fun NavGraph() {
@@ -52,7 +55,7 @@ fun NavGraph() {
                 }
 
                 composable(Screen.Create.route) {
-                    CreateScreen()
+                    CreateScreen(navController)
                 }
 
                 composable(Screen.Profile.route) {

@@ -70,16 +70,28 @@ object AudioPlayerController {
 
     fun play(context: Context, url: String, title: String, cover: String, id: String) {
         ensureInitialized(context)
-        if (currentId != id) {
-            player?.setMediaItem(MediaItem.fromUri(url))
-            player?.prepare()
-        }
+        // set metadata immediately
         currentUrl = url
         currentTitle = title
-        player?.play()
-        isPlaying = true
         currentCoverUrl = cover
         currentId = id
+
+        // check for a downloaded local file and play it if available
+        scope.launch {
+            val store = com.example.soundwave.data.local.DownloadStore(context)
+            val download = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { store.getById(id) }
+            val uriToPlay = if (download?.localPath != null) android.net.Uri.fromFile(java.io.File(download.localPath)) else android.net.Uri.parse(url)
+            if (currentId != id || player?.currentMediaItem == null) {
+                player?.setMediaItem(MediaItem.fromUri(uriToPlay))
+                player?.prepare()
+            } else {
+                // replace media item if different
+                player?.setMediaItem(MediaItem.fromUri(uriToPlay))
+                player?.prepare()
+            }
+            player?.play()
+            isPlaying = true
+        }
     }
 
     fun togglePlayPause() {

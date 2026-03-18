@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavController
 import com.example.soundwave.data.remote.GenerateMusicRequest
 import com.example.soundwave.data.repository.MusicRepository
 import com.example.soundwave.models.MusicGenerationResult
@@ -21,6 +22,7 @@ import compose.icons.fontawesomeicons.solid.Music
 import compose.icons.fontawesomeicons.solid.RecordVinyl
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import okhttp3.Route
 
 class CreateViewModel: ViewModel() {
 

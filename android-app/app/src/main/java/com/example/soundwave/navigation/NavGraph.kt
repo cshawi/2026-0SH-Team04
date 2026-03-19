@@ -21,8 +21,6 @@ import com.example.soundwave.ui.screens.ProfileScreen
 import com.example.soundwave.ui.theme.SoundWaveBackground
 import com.example.soundwave.ui.screens.PlayerScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.soundwave.viewModels.CreateViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.soundwave.ui.viewmodel.ProfileViewModel
 import com.example.soundwave.ui.screens.*
 
@@ -30,8 +28,7 @@ import com.example.soundwave.ui.screens.*
 fun NavGraph() {
 
     val navController = rememberNavController()
-    val currentRoute =
-        navController.currentBackStackEntryAsState().value?.destination?.route
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val viewModel: ProfileViewModel = viewModel()
     SoundWaveBackground {
         Scaffold(
@@ -75,12 +72,10 @@ fun NavGraph() {
                     ProfileScreen(navController, viewModel)
                 }
 
-                // 🔐 LOGIN
                 composable("login") {
                     LoginScreen(navController, viewModel)
                 }
 
-                // 📝 REGISTER
                 composable("register") {
                     RegisterScreen(navController, viewModel)
                 }

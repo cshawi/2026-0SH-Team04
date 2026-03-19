@@ -80,6 +80,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import android.widget.Toast
 import android.content.Intent
 import androidx.compose.material3.CircularProgressIndicator
@@ -93,6 +96,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.soundwave.data.TestDataProvider
 import com.example.soundwave.navigation.Screen
 import com.example.soundwave.ui.components.AudioPlayerController
 import com.example.soundwave.viewModels.CreateViewModel
@@ -120,6 +124,7 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
     )
 
     val coroutineScope = rememberCoroutineScope()
+
 
     LaunchedEffect(Unit) {
         AudioPlayerController.ensureInitialized(context)
@@ -617,6 +622,9 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     val menuExpandedFor = remember { mutableStateOf<String?>(null) }
+                    val showPlaylistPickerFor = remember { mutableStateOf<String?>(null) }
+                    val showCreatePlaylist = remember { mutableStateOf(false) }
+                    var newPlaylistTitle by remember { mutableStateOf("") }
 
                     generationResult.tracks.forEach { track ->
                         val isTrackPlaying = AudioPlayerController.isPlaying &&
@@ -787,14 +795,11 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                         onDismissRequest = { menuExpandedFor.value = null }
                                     ) {
                                         DropdownMenuItem(
-                                            text = { Text("Ajouter à la playlist") },
+                                            text = { Text("Ajouter à une playlist") },
                                             onClick = {
+                                                // open playlist picker dialog for this track
                                                 menuExpandedFor.value = null
-                                                Toast.makeText(
-                                                    context,
-                                                    "Ajouté à la playlist",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
+                                                showPlaylistPickerFor.value = track.id
                                             },
                                             leadingIcon = {
                                                 Icon(
@@ -808,6 +813,11 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                             text = { Text("Ajouter aux favoris") },
                                             onClick = {
                                                 menuExpandedFor.value = null
+                                                // ensure the generated track is registered in test data, then add to favorites
+                                                try {
+                                                    com.example.soundwave.data.TestDataProvider.addMusic(track)
+                                                    com.example.soundwave.data.TestDataProvider.addToLiked(track.id)
+                                                } catch (_: Exception) {}
                                                 Toast.makeText(
                                                     context,
                                                     "Ajouté aux favoris",
@@ -899,7 +909,79 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
 
                             }
                         }
-                        Spacer(modifier = Modifier.height(10.dp))
+                    // Playlist picker dialog
+                    if (showPlaylistPickerFor.value != null) {
+                        val tid = showPlaylistPickerFor.value!!
+                        AlertDialog(
+                            onDismissRequest = { showPlaylistPickerFor.value = null },
+                            title = { Text("Ajouter à la playlist") },
+                            text = {
+                                Column {
+                                    TestDataProvider.playlists.forEach { p ->
+                                        Row(modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                // ensure the generated track is registered in test data before adding to playlist
+                                                TestDataProvider.addMusic(generationResult.tracks.first { it.id == tid })
+                                                TestDataProvider.addTrackToPlaylist(p.id, tid)
+                                                Toast.makeText(context, "Ajouté à ${p.title}", Toast.LENGTH_SHORT).show()
+                                                showPlaylistPickerFor.value = null
+                                            }
+                                            .padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                            Text(text = p.title, modifier = Modifier.weight(1f))
+                                            Text(text = "${p.trackIds.size} tracks", color = Color.Gray)
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                        Button(onClick = {
+                                            showCreatePlaylist.value = true
+                                        }) {
+                                            Text("Créer nouvelle playlist")
+                                        }
+                                    }
+                                }
+                            },
+                            confirmButton = {},
+                            dismissButton = {
+                                Button(onClick = { showPlaylistPickerFor.value = null }) { Text("Fermer") }
+                            }
+                        )
+                    }
+
+                    // Create new playlist dialog
+                    if (showCreatePlaylist.value) {
+                        AlertDialog(
+                            onDismissRequest = { showCreatePlaylist.value = false },
+                            title = { Text("Créer une playlist") },
+                            text = {
+                                Column {
+                                    OutlinedTextField(value = newPlaylistTitle, onValueChange = { newPlaylistTitle = it }, label = { Text("Nom de la playlist") })
+                                }
+                            },
+                            confirmButton = {
+                                Button(onClick = {
+                                    val tid = showPlaylistPickerFor.value
+                                        if (!newPlaylistTitle.isBlank()) {
+                                        val newId = TestDataProvider.createPlaylist(newPlaylistTitle)
+                                        if (tid != null) {
+                                            TestDataProvider.addMusic(generationResult.tracks.first { it.id == tid })
+                                            TestDataProvider.addTrackToPlaylist(newId, tid)
+                                        }
+                                        Toast.makeText(context, "Playlist créée", Toast.LENGTH_SHORT).show()
+                                        newPlaylistTitle = ""
+                                        showCreatePlaylist.value = false
+                                        showPlaylistPickerFor.value = null
+                                    }
+                                }) { Text("Créer") }
+                            },
+                            dismissButton = {
+                                Button(onClick = { showCreatePlaylist.value = false }) { Text("Annuler") }
+                            }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
                     }
                 }
             }

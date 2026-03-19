@@ -22,9 +22,16 @@ import com.example.soundwave.models.MusicTrack
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.platform.LocalContext
 import com.example.soundwave.navigation.Screen
 import com.example.soundwave.ui.components.AudioPlayerController
 import com.example.soundwave.viewModels.HomeViewModel
+import com.example.soundwave.util.TimeUtils
+import com.example.soundwave.data.TestDataProvider
+import com.example.soundwave.viewModels.ProfileViewModel
+import coil.request.ImageRequest
+import androidx.compose.ui.platform.LocalContext
 
 
 
@@ -48,25 +55,32 @@ fun TopBar(navController: NavController){
             color = Color.White
         )
 
+    val profileVm: ProfileViewModel = viewModel(LocalContext.current as ComponentActivity)
+        val userState = profileVm.user
+        val user = userState.value
+
         Box(
             modifier = Modifier
                 .size(45.dp)
-                .background(
-                    Color(0xFF9C4DFF),
-                    shape = RoundedCornerShape(50)
-                )
-                .clickable {
-                    navController.navigate(Screen.Profile.route)
-                },
+                .clip(RoundedCornerShape(50))
+                .background(Color(0xFF9C4DFF))
+                .clickable { navController.navigate(Screen.Profile.route) },
             contentAlignment = Alignment.Center
-        ){
-
-            Text(
-                "AN",
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium
-            )
-
+        ) {
+            if (user?.avatarUrl != null) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current).data(user.avatarUrl).crossfade(true).build(),
+                    contentDescription = user.name,
+                    modifier = Modifier.size(45.dp).clip(RoundedCornerShape(50)),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Text(
+                    text = user?.name?.take(2)?.uppercase() ?: "AN",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
         }
 
     }
@@ -127,10 +141,14 @@ fun HomeScreen(
 @Composable
 fun Header(){
 
+    val profileVm: ProfileViewModel = viewModel(LocalContext.current as ComponentActivity)
+    val userState = profileVm.user
+    val user = userState.value
+
     Column {
 
         Text(
-            "Bienvenue Pharel",
+            text = "Bienvenue ${user?.name ?: "Utilisateur"}",
             style = MaterialTheme.typography.headlineMedium,
             color = Color.White
         )
@@ -215,11 +233,25 @@ fun MusicCard(music: MusicTrack, navController: NavController){
             maxLines = 1
         )
 
-        Text(
-            text = "${music.duration.toInt()} sec",
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.LightGray
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // style badge derived from music id
+            val styleIndex = try { music.id.toInt() % TestDataProvider.styles.size } catch (e: Exception) { 0 }
+            val style = TestDataProvider.styles[styleIndex]
+
+            Box(modifier = Modifier
+                .background(color = style.color, shape = RoundedCornerShape(8.dp))
+                .padding(horizontal = 8.dp, vertical = 4.dp)) {
+                Text(style.name, color = Color.White, style = MaterialTheme.typography.bodySmall)
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                text = TimeUtils.formatSecondsToMMSS(music.duration),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.LightGray
+            )
+        }
 
     }
 
@@ -286,7 +318,7 @@ fun DiscoverItem(music: MusicTrack, navController: NavController){
             )
 
             Text(
-                text = "${music.duration.toInt()} sec",
+                text = TimeUtils.formatSecondsToMMSS(music.duration),
                 color = Color(0xFFA0A0B5),
                 style = MaterialTheme.typography.bodySmall
             )

@@ -1,10 +1,10 @@
-package com.example.soundwave.ui.viewmodel
+package com.example.soundwave.viewModels
 
 import androidx.compose.runtime.mutableStateOf
+import com.example.soundwave.models.User
+import com.example.soundwave.data.TestDataProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavController
-import com.example.soundwave.models.User
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.regex.Pattern
@@ -20,7 +20,7 @@ class ProfileViewModel : ViewModel() {
     var errorMessage = mutableStateOf<String?>(null)
         private set
 
-    private val users = mutableListOf<User>()
+    private val users = TestDataProvider.users
 
     init {
         users.add(User(
@@ -31,6 +31,8 @@ class ProfileViewModel : ViewModel() {
             avatarUrl = null
         ))
     }
+
+
 
     fun register(name: String, email: String, password: String): Boolean {
         when {
@@ -60,7 +62,6 @@ class ProfileViewModel : ViewModel() {
             avatarUrl = null
         )
 
-        users.add(user)
         errorMessage.value = null
         return true
     }
@@ -89,6 +90,15 @@ class ProfileViewModel : ViewModel() {
 
     fun updateAvatar(url: String) {
         currentUser.value = currentUser.value?.copy(avatarUrl = url)
+    }
+
+    // Convenience: login one of the provided test users
+    fun loginAsTestUser(index: Int = 0) {
+        val u = users.getOrNull(index)
+        if (u != null) {
+            user.value = u
+            isLoggedIn.value = true
+        }
     }
 
     fun logout() {

@@ -15,6 +15,8 @@ import com.example.soundwave.ui.components.AudioPlayerBar
 import com.example.soundwave.ui.components.BottomNavBar
 import com.example.soundwave.ui.screens.CreateScreen
 import com.example.soundwave.ui.screens.HomeScreen
+import com.example.soundwave.ui.screens.SearchScreen
+import com.example.soundwave.ui.screens.LibraryScreen
 import com.example.soundwave.ui.screens.ProfileScreen
 import com.example.soundwave.ui.theme.SoundWaveBackground
 import com.example.soundwave.ui.screens.PlayerScreen
@@ -56,6 +58,14 @@ fun NavGraph() {
 
                 composable(Screen.Create.route) {
                     CreateScreen(navController)
+                }
+
+                composable(Screen.Search.route) {
+                    SearchScreen(navController)
+                }
+
+                composable(Screen.Library.route) {
+                    LibraryScreen(navController)
                 }
 
                 composable(Screen.Profile.route) {

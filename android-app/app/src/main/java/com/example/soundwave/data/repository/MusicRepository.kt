@@ -45,6 +45,7 @@ class MusicRepository(
             id = response.id,
             name = response.name,
             email = response.email,
+            password = response.password,
             avatarUrl = response.avatarUrl
         )
     }

@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 object AudioPlayerController {
 
-    var currentId by mutableStateOf<String?>(null)
+    var currentId by mutableStateOf<Int?>(null)
         private set
     var currentUrl by mutableStateOf<String?>(null)
         private set
@@ -68,7 +68,7 @@ object AudioPlayerController {
         }
     }
 
-    fun play(context: Context, url: String, title: String, cover: String, id: String) {
+    fun play(context: Context, url: String, title: String, cover: String, id: Int) {
         ensureInitialized(context)
         // set metadata immediately
         currentUrl = url

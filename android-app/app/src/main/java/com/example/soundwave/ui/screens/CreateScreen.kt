@@ -621,8 +621,8 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.height(10.dp))
-                    val menuExpandedFor = remember { mutableStateOf<String?>(null) }
-                    val showPlaylistPickerFor = remember { mutableStateOf<String?>(null) }
+                    val menuExpandedFor = remember { mutableStateOf<Int?>(null) }
+                    val showPlaylistPickerFor = remember { mutableStateOf<Int?>(null) }
                     val showCreatePlaylist = remember { mutableStateOf(false) }
                     var newPlaylistTitle by remember { mutableStateOf("") }
 
@@ -648,7 +648,7 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                         context,
                                         track.audioUrl,
                                         track.title,
-                                        track.imageUrl,
+                                        track.coverUrl,
                                         track.id
                                     )
                                 },
@@ -669,7 +669,7 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                 ) {
                                     AsyncImage(
                                         model = ImageRequest.Builder(context)
-                                            .data(track.imageUrl)
+                                            .data(track.coverUrl)
                                             .crossfade(true)
                                             .build(),
                                         contentDescription = "Couverture générée",

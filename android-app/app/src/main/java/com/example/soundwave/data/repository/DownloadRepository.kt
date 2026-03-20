@@ -11,7 +11,7 @@ class DownloadRepository(private val context: Context) {
         store.upsert(entity)
     }
 
-    suspend fun getById(trackId: String): DownloadEntity? = store.getById(trackId)
+    suspend fun getById(trackId: Int): DownloadEntity? = store.getById(trackId)
 
-    suspend fun delete(trackId: String) = store.delete(trackId)
+    suspend fun delete(trackId: Int) = store.delete(trackId)
 }

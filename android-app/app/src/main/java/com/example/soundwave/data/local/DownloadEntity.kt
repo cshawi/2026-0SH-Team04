@@ -2,7 +2,7 @@ package com.example.soundwave.data.local
 
 // Simple POJO used by the lightweight DownloadStore (JSON file) to track downloads.
 data class DownloadEntity(
-    val trackId: String,
+    val trackId: Int,
     val title: String,
     val localPath: String?,
     val status: String,

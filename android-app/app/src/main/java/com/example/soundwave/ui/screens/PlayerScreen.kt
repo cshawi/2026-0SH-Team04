@@ -33,8 +33,9 @@ fun PlayerScreen(
     val context = LocalContext.current
     val musicList = homeViewModel.musicList
 
-    val music = musicList.find { it.id == musicId }
-    val currentIndex = musicList.indexOfFirst { it.id == musicId }
+    val idInt = musicId.toIntOrNull()
+    val music = idInt?.let { musicList.find { m -> m.id == it } }
+    val currentIndex = idInt?.let { musicList.indexOfFirst { m -> m.id == it } } ?: -1
 
     val isPlaying = AudioPlayerController.isPlaying
     val duration = AudioPlayerController.durationMs
@@ -108,7 +109,7 @@ fun PlayerScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             AsyncImage(
-                model = music?.imageUrl,
+                model = music?.coverUrl,
                 contentDescription = null,
                 modifier = Modifier
                     .size(280.dp)
@@ -181,7 +182,7 @@ fun PlayerScreen(
                                 context,
                                 it.audioUrl,
                                 it.title,
-                                it.imageUrl,
+                                it.coverUrl,
                                 it.id
                             )
                         }
@@ -208,7 +209,7 @@ fun PlayerScreen(
                                     context,
                                     it.audioUrl,
                                     it.title,
-                                    it.imageUrl,
+                                    it.coverUrl,
                                     it.id
                                 )
                             }
@@ -250,13 +251,13 @@ fun PlayerScreen(
 
                             navController.navigate("player/${it.id}")
 
-                            AudioPlayerController.play(
-                                context,
-                                it.audioUrl,
-                                it.title,
-                                it.imageUrl,
-                                it.id
-                            )
+                                AudioPlayerController.play(
+                                    context,
+                                    it.audioUrl,
+                                    it.title,
+                                    it.coverUrl,
+                                    it.id
+                                )
                         }
 
                     }

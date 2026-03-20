@@ -198,7 +198,7 @@ fun MusicCard(music: MusicTrack, navController: NavController){
                     context,
                     music.audioUrl,
                     music.title,
-                    music.imageUrl,
+                    music.coverUrl,
                     music.id
                 )
             }
@@ -212,7 +212,7 @@ fun MusicCard(music: MusicTrack, navController: NavController){
         ){
 
             AsyncImage(
-                model = music.imageUrl,
+                model = music.coverUrl,
                 contentDescription = music.title,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
@@ -293,7 +293,7 @@ fun DiscoverItem(music: MusicTrack, navController: NavController){
     ){
 
         AsyncImage(
-            model = music.imageUrl,
+            model = music.coverUrl,
             contentDescription = music.title,
             modifier = Modifier
                 .size(64.dp)
@@ -327,7 +327,7 @@ fun DiscoverItem(music: MusicTrack, navController: NavController){
                     context,
                     music.audioUrl,
                     music.title,
-                    music.imageUrl,
+                    music.coverUrl,
                     music.id
                 )
             },

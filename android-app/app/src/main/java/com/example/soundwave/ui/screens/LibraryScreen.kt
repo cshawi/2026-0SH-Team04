@@ -65,8 +65,8 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
     val albums by vm.albums
     val playlistViews by vm.playlistViews
 
-    // expansion state per playlist id
-    val expanded = remember { mutableStateMapOf<String, Boolean>() }
+        // expansion state per playlist id
+        val expanded = remember { mutableStateMapOf<Int, Boolean>() }
 
     // show liked tracks list
     var showLiked by remember { mutableStateOf(false) }
@@ -147,7 +147,7 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                                 .fillMaxWidth()
                                 .padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                                 AsyncImage(
-                                    model = track.imageUrl,
+                                        model = track.coverUrl,
                                     contentDescription = track.title,
                                     modifier = Modifier
                                         .size(56.dp)
@@ -167,7 +167,7 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                                         context,
                                         track.audioUrl,
                                         track.title,
-                                        track.imageUrl,
+                                                    track.coverUrl,
                                         track.id
                                     )
                                 }) {
@@ -232,7 +232,7 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                                             .fillMaxWidth()
                                             .padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                                             AsyncImage(
-                                                model = track.imageUrl,
+                                                model = track.coverUrl,
                                                 contentDescription = track.title,
                                                 modifier = Modifier
                                                     .size(56.dp)
@@ -249,12 +249,12 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
 
                                             IconButton(onClick = {
                                                 AudioPlayerController.play(
-                                                    context,
-                                                    track.audioUrl,
-                                                    track.title,
-                                                    track.imageUrl,
-                                                    track.id
-                                                )
+                                                        context,
+                                                        track.audioUrl,
+                                                        track.title,
+                                                        track.coverUrl,
+                                                        track.id
+                                                    )
                                             }) {
                                                 Icon(imageVector = Icons.Default.PlayArrow, contentDescription = "Play", tint = Color.White)
                                             }

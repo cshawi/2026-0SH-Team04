@@ -22,13 +22,15 @@ class DownloadWorker(
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
-        val trackId = inputData.getString("trackId") ?: return Result.failure()
+        val trackId = inputData.getInt("trackId", -1)
+        if (trackId == -1) return Result.failure()
         val audioUrl = inputData.getString("audioUrl") ?: return Result.failure()
-        val title = inputData.getString("title") ?: trackId
+        val title = inputData.getString("title") ?: trackId.toString()
 
-    val store = DownloadStore(applicationContext)
-    // mark as downloading
-    store.upsert(DownloadEntity(trackId = trackId, title = title, localPath = null, status = "DOWNLOADING", progress = 0))
+        val store = DownloadStore(applicationContext)
+        
+        // mark as downloading
+        store.upsert(DownloadEntity(trackId = trackId, title = title, localPath = null, status = "DOWNLOADING", progress = 0))
 
         return withContext(Dispatchers.IO) {
             try {

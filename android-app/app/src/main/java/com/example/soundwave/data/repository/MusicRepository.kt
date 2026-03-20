@@ -9,6 +9,7 @@ import com.example.soundwave.data.remote.UserResponse
 import com.example.soundwave.models.MusicGenerationResult
 import com.example.soundwave.models.MusicTrack
 import com.example.soundwave.models.User
+import kotlin.math.abs
 
 class MusicRepository(
     private val remoteDataSource: MusicRemoteDataSource = FakeMusicRemoteDataSource()
@@ -27,13 +28,16 @@ class MusicRepository(
             MusicGenerationResult(
                 taskId = status.taskId,
                 tracks = status.tracks.map { track ->
+                    // parse id as Int when possible; otherwise derive an Int from hashCode
+                    val parsedId = track.id.toIntOrNull() ?: abs(track.id.hashCode())
                     MusicTrack(
-                        id = track.id,
-                        audioUrl = track.audioUrl,
-                        imageUrl = track.imageUrl,
+                        id = parsedId,
                         title = track.title,
-                        duration = track.duration,
-                        createdAt = track.createdAt
+                        styleName = "Unknown",
+                        duration = track.duration.toInt(),
+                        createdAt = track.createdAt,
+                        audioUrl = track.audioUrl,
+                        coverUrl = track.imageUrl
                     )
                 }
             )
@@ -41,11 +45,12 @@ class MusicRepository(
     }
 
     fun mapUser(response: UserResponse): User {
+        val id = response.id.toIntOrNull() ?: abs(response.id.hashCode())
         return User(
-            id = response.id,
+            id = id,
             name = response.name,
-            email = response.email,
-            password = response.password,
+            email = response.email ?: "",
+            password = "",
             avatarUrl = response.avatarUrl
         )
     }

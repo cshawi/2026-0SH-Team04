@@ -6,10 +6,11 @@ data class MusicGenerationResult(
 )
 
 data class MusicTrack(
-	val id: String,
-	val audioUrl: String,
-	val imageUrl: String,
+	val id: Int,
 	val title: String,
-	val duration: Double,
-	val createdAt: String
+	val styleName: String,
+	val duration: Int,
+	val createdAt: String,
+	val audioUrl: String,
+	val coverUrl: String
 )

@@ -147,7 +147,7 @@ fun SearchScreen(
                     ) {
 
                         AsyncImage(
-                            model = music.imageUrl,
+                            model = music.coverUrl,
                             contentDescription = null,
                             modifier = Modifier
                                 .size(60.dp)

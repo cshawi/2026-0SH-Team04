@@ -44,21 +44,22 @@ class DownloadStore(private val context: Context) {
             trackObj.put("status", entity.status)
             trackObj.put("progress", entity.progress)
             trackObj.put("updatedAt", entity.updatedAt)
-            tracks.put(entity.trackId, trackObj)
+            // JSON object keys must be strings; store under stringified id
+            tracks.put(entity.trackId.toString(), trackObj)
             root.put("tracks", tracks)
             writeJson(root)
         }
     }
-
-    suspend fun getById(trackId: String): DownloadEntity? = withContext(Dispatchers.IO) {
+    suspend fun getById(trackId: Int): DownloadEntity? = withContext(Dispatchers.IO) {
         synchronized(lock) {
             val root = readJson()
             if (!root.has("tracks")) return@withContext null
             val tracks = root.getJSONObject("tracks")
-            if (!tracks.has(trackId)) return@withContext null
-            val o = tracks.getJSONObject(trackId)
+            val key = trackId.toString()
+            if (!tracks.has(key)) return@withContext null
+            val o = tracks.getJSONObject(key)
             return@withContext DownloadEntity(
-                trackId = o.optString("trackId", trackId),
+                trackId = o.optInt("trackId", trackId),
                 title = o.optString("title", ""),
                 localPath = o.optString("localPath", null).let { if (it.isNullOrEmpty()) null else it },
                 status = o.optString("status", ""),
@@ -68,12 +69,12 @@ class DownloadStore(private val context: Context) {
         }
     }
 
-    suspend fun delete(trackId: String) = withContext(Dispatchers.IO) {
+    suspend fun delete(trackId: Int) = withContext(Dispatchers.IO) {
         synchronized(lock) {
             val root = readJson()
             if (!root.has("tracks")) return@withContext
             val tracks = root.getJSONObject("tracks")
-            tracks.remove(trackId)
+            tracks.remove(trackId.toString())
             root.put("tracks", tracks)
             writeJson(root)
         }

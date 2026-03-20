@@ -389,17 +389,28 @@ Permettre à un utilisateur de :
   - nom
   - email
   - motDePasse
-  - quota
-  - role
+  - avatarUrl
+
+
+<!-- En réflexion -->
+  <!-- - quota
+  - role -->
 
 - **Generation**
   - id
   - titre
-  - style
-  - humeur
-  - durée
-  - dateGeneration
-  - urlFichier
+  - styleName
+  - duration
+  - createdAt
+  - audioUrl
+  - coverUrl
+
+- **Playlist**
+  - id
+  - userId
+  - Generations[]
+  
+  
 
 ---
 

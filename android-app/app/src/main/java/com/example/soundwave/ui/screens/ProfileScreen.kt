@@ -255,7 +255,7 @@ fun AvatarSection(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             if (uri != null) {
-
+                user.avatarUrl = uri.path
             }
         }
     )

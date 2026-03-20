@@ -30,7 +30,7 @@ fun NavGraph() {
             bottomBar = {
                 Column {
                     AudioPlayerBar()
-                    BottomNavBar(navController)
+                    BottomNavBar(navController) //boutton nav
                 }
             }
         ) { innerPadding ->
@@ -51,12 +51,10 @@ fun NavGraph() {
                     ProfileScreen(navController, viewModel)
                 }
 
-                // 🔐 LOGIN
                 composable("login") {
                     LoginScreen(navController, viewModel)
                 }
 
-                // 📝 REGISTER
                 composable("register") {
                     RegisterScreen(navController, viewModel)
                 }

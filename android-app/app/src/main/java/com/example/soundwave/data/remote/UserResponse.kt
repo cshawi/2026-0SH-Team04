@@ -5,5 +5,5 @@ data class UserResponse(
     val name: String,
     val email: String?,
     val password: String,
-    val avatarUrl: String?
+    var avatarUrl: String?
 )

@@ -21,30 +21,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.soundwave.ui.viewmodel.ProfileViewModel
-import kotlin.math.PI
-import kotlin.math.sin
+import com.example.soundwave.viewModels.ProfileViewModel
 
 @Composable
 fun AuthChoiceScreen(
     navController: NavController,
     viewModel: ProfileViewModel = viewModel()
 ) {
-    // Vérifier si l'utilisateur est déjà connecté
     val isLoggedIn = viewModel.currentUser.value != null
 
-    // Animation pour la brillance
     val shimmerProgress = remember { mutableFloatStateOf(0f) }
 
-    // Animation infinie pour la brillance
     LaunchedEffect(Unit) {
         while (true) {
-            kotlinx.coroutines.delay(16) // ~60 FPS
+            kotlinx.coroutines.delay(16)
             shimmerProgress.floatValue = (shimmerProgress.floatValue + 0.02f) % 1f
         }
     }
 
-    // Redirection automatique si déjà connecté
     LaunchedEffect(isLoggedIn) {
         if (isLoggedIn) {
             navController.navigate("profile") {
@@ -53,7 +47,6 @@ fun AuthChoiceScreen(
         }
     }
 
-    // Pas de background ici - on utilise celui par défaut du thème
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -61,7 +54,6 @@ fun AuthChoiceScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Logo
         Icon(
             imageVector = Icons.Default.MusicNote,
             contentDescription = "Logo SoundWave",
@@ -71,7 +63,6 @@ fun AuthChoiceScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Titre
         Text(
             text = "SoundOfSoul",
             fontSize = 42.sp,
@@ -79,7 +70,6 @@ fun AuthChoiceScreen(
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        // Sous-titre
         Text(
             text = "Votre musique, votre univers",
             fontSize = 16.sp,
@@ -89,7 +79,6 @@ fun AuthChoiceScreen(
 
         Spacer(modifier = Modifier.height(60.dp))
 
-        // BOUTON CONNEXION AVEC DÉGRADÉ ET BRILLANCE
         ShimmerButton(
             text = "Se connecter",
             colors = listOf(
@@ -103,7 +92,6 @@ fun AuthChoiceScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // BOUTON INSCRIPTION AVEC DÉGRADÉ ET BRILLANCE
         ShimmerButton(
             text = "S'inscrire",
             colors = listOf(
@@ -134,15 +122,13 @@ fun ShimmerButton(
                     colors = colors
                 )
             )
-            .graphicsLayer(alpha = 0.99f) // Évite les problèmes de clipping
+            .graphicsLayer(alpha = 0.99f)
             .drawWithContent {
                 drawContent()
 
-                // Calcul de la position de la brillance
                 val shimmerWidth = size.width * 0.5f
                 val shimmerX = size.width * (shimmerProgress - 0.2f)
 
-                // Dégradé de brillance (blanc semi-transparent)
                 val shimmerBrush = Brush.linearGradient(
                     colors = listOf(
                         Color.White.copy(alpha = 0f),
@@ -155,7 +141,6 @@ fun ShimmerButton(
                     end = Offset(shimmerX + shimmerWidth, 0f)
                 )
 
-                // Dessine la brillance
                 drawRect(
                     brush = shimmerBrush,
                     size = size

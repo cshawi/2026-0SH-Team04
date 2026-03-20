@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.lazy.grid.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
@@ -38,7 +37,7 @@ fun SearchScreen(
     val results = viewModel.getFilteredMusic()
 
     val profileVm: ProfileViewModel = viewModel(LocalActivity.current)
-    val userState = profileVm.user
+    val userState = profileVm.currentUser
     val user = userState.value
 
     Column(
@@ -47,7 +46,6 @@ fun SearchScreen(
             .padding(16.dp)
     ) {
 
-        // HEADER
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -97,7 +95,6 @@ fun SearchScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // SEARCH BAR
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -129,7 +126,6 @@ fun SearchScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // RESULTATS
         if (searchText.isNotEmpty()) {
 
             LazyColumn {
@@ -165,7 +161,6 @@ fun SearchScreen(
 
             LazyColumn {
 
-                // 🎧 COMMENCER
                 item {
                     Text(
                         "Commencer la navigation",
@@ -179,7 +174,6 @@ fun SearchScreen(
 
                 item { Spacer(modifier = Modifier.height(20.dp)) }
 
-                // 🌍 DISCOVER
                 item {
                     Text(
                         "Découvrez de nouveaux horizons",
@@ -193,7 +187,6 @@ fun SearchScreen(
 
                 item { Spacer(modifier = Modifier.height(20.dp)) }
 
-                // 🔥 TOUT PARCOURIR
                 item {
                     Text(
                         "Tout parcourir",

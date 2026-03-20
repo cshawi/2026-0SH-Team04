@@ -3,7 +3,6 @@ package com.example.soundwave.ui.screens
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,6 +12,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,8 +32,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.soundwave.models.User
 import com.example.soundwave.navigation.Screen
-import com.example.soundwave.ui.viewmodel.ProfileViewModel
+import com.example.soundwave.viewModels.ProfileViewModel
 
 @Composable
 fun ProfileScreen(
@@ -106,7 +109,6 @@ fun ProfileScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Avatar avec caméra (plus haut)
             AvatarSection(
                 user = user,
                 modifier = Modifier.padding(top = 20.dp)
@@ -142,7 +144,7 @@ fun ProfileScreen(
                     },
                     onCancel = {
                         editedName = user.name
-                        editedEmail = user.email ?: ""
+                        editedEmail = user.email
                         isEditing = false
                     }
                 )
@@ -181,7 +183,7 @@ fun ToolbarSection(
             .height(56.dp)
     ) {
         Icon(
-            imageVector = Icons.Default.ArrowBack,
+            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = "Retour",
             modifier = Modifier
                 .size(32.dp)
@@ -217,7 +219,7 @@ fun ToolbarSection(
                     },
                     leadingIcon = {
                         Icon(
-                            Icons.Default.Logout,
+                            Icons.AutoMirrored.Filled.Logout,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurface
                         )
@@ -248,7 +250,7 @@ fun ToolbarSection(
 
 @Composable
 fun UserInfoSection(
-    user: com.example.soundwave.models.User,
+    user: User,
     onEditClick: () -> Unit
 ) {
     Column(
@@ -280,7 +282,7 @@ fun UserInfoSection(
         }
 
         Text(
-            text = user.email ?: "Email non renseigné",
+            text = user.email,
             fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
         )
@@ -364,7 +366,7 @@ fun StatsSection() {
             .padding(horizontal = 24.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        StatCard(12, "Playlists", Icons.Default.PlaylistPlay)
+        StatCard(12, "Playlists", Icons.AutoMirrored.Filled.PlaylistPlay)
         StatCard(48, "Favoris", Icons.Default.Favorite)
     }
 }
@@ -496,7 +498,7 @@ fun StatCard(value: Int, label: String, icon: androidx.compose.ui.graphics.vecto
 
 @Composable
 fun AvatarSection(
-    user: com.example.soundwave.models.User,
+    user: User,
     modifier: Modifier = Modifier
 ) {
     val imagePicker = rememberLauncherForActivityResult(
@@ -562,7 +564,6 @@ fun AvatarSection(
             }
         }
 
-        // Icône caméra avec style amélioré
         Box(
             modifier = Modifier
                 .size(42.dp)

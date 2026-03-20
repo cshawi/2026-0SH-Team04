@@ -22,18 +22,6 @@ class ProfileViewModel : ViewModel() {
 
     private val users = TestDataProvider.users
 
-    init {
-        users.add(User(
-            id = "1",
-            name = "Test User",
-            email = "test@test.com",
-            password = hashPassword("password123"),
-            avatarUrl = null
-        ))
-    }
-
-
-
     fun register(name: String, email: String, password: String): Boolean {
         when {
             name.isBlank() || email.isBlank() || password.isBlank() -> {
@@ -53,14 +41,6 @@ class ProfileViewModel : ViewModel() {
                 return false
             }
         }
-
-        val user = User(
-            id = System.currentTimeMillis().toString(),
-            name = name,
-            email = email,
-            password = hashPassword(password),  // ← Hash !
-            avatarUrl = null
-        )
 
         errorMessage.value = null
         return true
@@ -90,15 +70,6 @@ class ProfileViewModel : ViewModel() {
 
     fun updateAvatar(url: String) {
         currentUser.value = currentUser.value?.copy(avatarUrl = url)
-    }
-
-    // Convenience: login one of the provided test users
-    fun loginAsTestUser(index: Int = 0) {
-        val u = users.getOrNull(index)
-        if (u != null) {
-            user.value = u
-            isLoggedIn.value = true
-        }
     }
 
     fun logout() {

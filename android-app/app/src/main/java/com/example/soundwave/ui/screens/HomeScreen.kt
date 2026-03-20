@@ -52,7 +52,7 @@ fun TopBar(navController: NavController){
         )
 
     val profileVm: ProfileViewModel = viewModel(LocalActivity.current)
-        val userState = profileVm.user
+        val userState = profileVm.currentUser
         val user = userState.value
 
         Box(
@@ -138,7 +138,7 @@ fun HomeScreen(
 fun Header(){
 
     val profileVm: ProfileViewModel = viewModel(LocalActivity.current)
-    val userState = profileVm.user
+    val userState = profileVm.currentUser
     val user = userState.value
 
     Column {
@@ -230,14 +230,15 @@ fun MusicCard(music: MusicTrack, navController: NavController){
         )
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            // style badge derived from music id
-            val styleIndex = try { music.id.toInt() % TestDataProvider.styles.size } catch (e: Exception) { 0 }
-            val style = TestDataProvider.styles[styleIndex]
+
+            val style = TestDataProvider.styles.find { it.name == music.styleName }
+            val styleColor = style?.color ?: Color.Gray
+            val styleName = style?.name ?: music.styleName ?: "Unknown"
 
             Box(modifier = Modifier
-                .background(color = style.color, shape = RoundedCornerShape(8.dp))
+                .background(color = styleColor, shape = RoundedCornerShape(8.dp))
                 .padding(horizontal = 8.dp, vertical = 4.dp)) {
-                Text(style.name, color = Color.White, style = MaterialTheme.typography.bodySmall)
+                Text(styleName, color = Color.White, style = MaterialTheme.typography.bodySmall)
             }
 
             Spacer(modifier = Modifier.width(8.dp))

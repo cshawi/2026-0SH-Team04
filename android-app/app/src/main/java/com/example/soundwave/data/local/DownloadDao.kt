@@ -5,5 +5,4 @@ package com.example.soundwave.data.local
  * We keep a minimal interface type to make future migration easier.
  */
 interface DownloadDao {
-    // Not used in current implementation. See DownloadStore for concrete storage.
 }

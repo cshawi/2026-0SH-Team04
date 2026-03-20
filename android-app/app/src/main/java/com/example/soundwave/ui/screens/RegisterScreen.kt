@@ -1,6 +1,5 @@
 package com.example.soundwave.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,32 +7,27 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.soundwave.ui.viewmodel.ProfileViewModel
+import com.example.soundwave.viewModels.ProfileViewModel
 
 @Composable
 fun RegisterScreen(
     navController: NavController,
     viewModel: ProfileViewModel
 ) {
-    var username by remember { mutableStateOf("") }  // ← Renommé
+    var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var localError by remember { mutableStateOf("") }
 
-    // États du ViewModel
     val isLoading = viewModel.isLoading.value
     val viewModelError = viewModel.errorMessage.value
 
-    // Combine les erreurs
     val errorMessage = localError.ifEmpty { viewModelError ?: "" }
 
     Box(
@@ -47,7 +41,6 @@ fun RegisterScreen(
                 .padding(24.dp),
             verticalArrangement = Arrangement.Center
         ) {
-            // Bouton retour
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Retour",
@@ -74,7 +67,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // Nom d'utilisateur
             OutlinedTextField(
                 value = username,
                 onValueChange = {
@@ -94,7 +86,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Email
             OutlinedTextField(
                 value = email,
                 onValueChange = {
@@ -114,7 +105,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Mot de passe
             OutlinedTextField(
                 value = password,
                 onValueChange = {
@@ -135,7 +125,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Confirmation
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = {
@@ -165,7 +154,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Bouton d'inscription
             Button(
                 onClick = {
                     when {
@@ -185,7 +173,6 @@ fun RegisterScreen(
                                     popUpTo("register") { inclusive = true }
                                 }
                             }
-                            // Si erreur, elle sera dans viewModel.errorMessage
                         }
                     }
                 },
@@ -210,7 +197,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Lien vers connexion
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center

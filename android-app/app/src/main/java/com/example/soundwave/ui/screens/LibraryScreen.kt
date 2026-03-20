@@ -50,6 +50,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.soundwave.ui.LocalActivity
+import com.example.soundwave.viewModels.ProfileViewModel
 import com.example.soundwave.viewModels.AlbumItem
 import com.example.soundwave.viewModels.LibraryViewModel
 import com.example.soundwave.viewModels.PlaylistItem
@@ -61,14 +63,16 @@ import com.example.soundwave.util.TimeUtils
 @Composable
 fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel()) {
     val likedCount by vm.likedCount
-    val playlists by vm.playlists
     val albums by vm.albums
-    val playlistViews by vm.playlistViews
+    
+    val profileVm: ProfileViewModel = viewModel(LocalActivity.current)
+    val userId = profileVm.currentUser.value?.id
 
-        // expansion state per playlist id
-        val expanded = remember { mutableStateMapOf<Int, Boolean>() }
+    val playlists = vm.playlistsForUser(userId)
+    val playlistViews = vm.playlistViewsForUser(userId)
 
-    // show liked tracks list
+    val expanded = remember { mutableStateMapOf<Int, Boolean>() }
+
     var showLiked by remember { mutableStateOf(false) }
 
     Surface(
@@ -104,11 +108,9 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // Liked section
             Card(shape = RoundedCornerShape(12.dp), modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    // toggle liked list, close playlists when opening
                     if (showLiked) {
                         showLiked = false
                     } else {
@@ -137,7 +139,6 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                 }
             }
 
-                // If liked list open, render liked tracks
                 if (showLiked) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Column(modifier = Modifier.fillMaxWidth()) {
@@ -182,12 +183,14 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                     Spacer(modifier = Modifier.height(20.dp))
                 }
 
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Playlists", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(text = "Voir toutes vos playlists créées", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-            }
+            if(!playlists.isEmpty()){
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "Playlists", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(text = "Voir toutes vos playlists créées", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             Column(modifier = Modifier.fillMaxWidth()) {
                 val rows = playlists.chunked(2)
@@ -203,7 +206,6 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                                     } else {
                                         expanded.clear()
                                         expanded[view.id] = true
-                                        // ensure liked list is closed when opening a playlist
                                         showLiked = false
                                     }
                                 }
@@ -217,7 +219,6 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                     }
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Render expanded track lists immediately below this row
                     rowItems.forEach { p ->
                         val view = playlistViews.firstOrNull { it.title == p.title }
                         if (view != null && (expanded[view.id] == true)) {
@@ -269,7 +270,6 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Albums Recent
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column {
                         Text(text = "Albums Récents", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
@@ -297,12 +297,10 @@ fun PlaylistCard(item: PlaylistItem, modifier: Modifier = Modifier) {
         Box(modifier = Modifier
             .height(120.dp)
             .fillMaxWidth()) {
-            // Placeholder artwork (gradient)
             Box(modifier = Modifier
                 .matchParentSize()
                 .background(brush = Brush.linearGradient(listOf(Color(0xFF5B8CFF), Color(0xFF9B59FF)))))
 
-            // Title/Count overlay
             Column(modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(12.dp)) {
@@ -321,7 +319,6 @@ fun PlaylistCard(view: com.example.soundwave.data.TestDataProvider.PlaylistView,
             .height(140.dp)
             .fillMaxWidth()) {
 
-            // cover image if available
             if (!view.coverUrl.isNullOrEmpty()) {
                 AsyncImage(
                     model = view.coverUrl,
@@ -335,7 +332,6 @@ fun PlaylistCard(view: com.example.soundwave.data.TestDataProvider.PlaylistView,
                     .background(brush = Brush.linearGradient(listOf(Color(0xFF5B8CFF), Color(0xFF9B59FF)))))
             }
 
-            // overlay: title, owner
             val owner = TestDataProvider.users.firstOrNull { it.id == view.ownerId }
             Column(modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -344,7 +340,6 @@ fun PlaylistCard(view: com.example.soundwave.data.TestDataProvider.PlaylistView,
                 Text(text = "${view.trackIds.size} tracks • ${owner?.name ?: "Unknown"}", color = Color(0xCCFFFFFF), fontSize = 12.sp)
             }
 
-            // owner avatar top-left
             if (owner?.avatarUrl != null) {
                 AsyncImage(
                     model = owner.avatarUrl,

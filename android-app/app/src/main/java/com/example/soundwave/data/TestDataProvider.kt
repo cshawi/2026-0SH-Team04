@@ -12,10 +12,10 @@ import androidx.compose.runtime.mutableStateListOf
 object TestDataProvider {
 
     // Users (ids as Int)
-    val users = listOf(
-        User(id = 1, name = "Alice", email = "alice@music.com", password = "password", avatarUrl = "https://i.pravatar.cc/150?img=1"),
-        User(id = 2, name = "Bob", email = "bob@music.com", password = "password", avatarUrl = "https://i.pravatar.cc/150?img=2"),
-        User(id = 3, name = "Clara", email = "clara@music.com", password = "password", avatarUrl = "https://i.pravatar.cc/150?img=3")
+    val users = mutableListOf(
+        User(id = 1, name = "Alice", email = "alice@gmail.com", password = "1645132433", avatarUrl = "https://i.pravatar.cc/150?img=1"),
+        User(id = 2, name = "Bob", email = "bob@gmail.com", password = "-1382148687", avatarUrl = "https://i.pravatar.cc/150?img=2"),
+        User(id = 3, name = "Clara", email = "clara@gmail.com", password = "-1349282381", avatarUrl = "https://i.pravatar.cc/150?img=3")
     )
 
     // Musics table mapped to MusicTrack model

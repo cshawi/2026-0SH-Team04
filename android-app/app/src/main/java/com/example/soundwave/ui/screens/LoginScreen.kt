@@ -5,7 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,7 +20,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.soundwave.navigation.Screen
-import com.example.soundwave.ui.viewmodel.ProfileViewModel
+import com.example.soundwave.viewModels.ProfileViewModel
 import kotlinx.coroutines.delay
 
 @Composable
@@ -39,7 +39,7 @@ fun LoginScreen(
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(16) // ~60 FPS
+            delay(16)
             shimmerProgress.floatValue = (shimmerProgress.floatValue + 0.02f) % 1f
         }
     }
@@ -58,7 +58,7 @@ fun LoginScreen(
         ) {
 
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Retour",
                 modifier = Modifier
                     .size(32.dp)

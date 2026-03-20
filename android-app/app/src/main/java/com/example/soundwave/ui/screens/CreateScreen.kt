@@ -29,7 +29,6 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MusicNote
@@ -41,7 +40,6 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.AccessTimeFilled
-import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Share
@@ -85,7 +83,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import android.widget.Toast
 import android.content.Intent
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.withContext
@@ -455,31 +454,6 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                         )
                                     }
                                 }
-
-                                //                            Box(
-                                //                                modifier = Modifier
-                                //                                    .clip(RoundedCornerShape(20.dp))
-                                //                                    .background(
-                                //                                        if (isSelected)
-                                //                                            style.color.copy(alpha = 0.2f)
-                                //                                        else
-                                //                                            MaterialTheme.colorScheme.surfaceVariant
-                                //                                    )
-                                //                                    .border(
-                                //                                        1.dp,
-                                //                                        if (isSelected) style.color else Color.Transparent,
-                                //                                        RoundedCornerShape(20.dp)
-                                //                                    )
-                                //                                    .clickable { createViewModel.selectedStyle = style }
-                                //                                    .padding(horizontal = 14.dp, vertical = 10.dp)
-                                //                            ) {
-                                //                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                //                                    Icon(style.icon, contentDescription = null, tint = style.color,
-                                //                                  modifier = Modifier.size(20.dp))
-                                //                                    Spacer(modifier = Modifier.width(6.dp))
-                                //                                    Text(style.name)
-                                //                                }
-                                //                            }
                             }
                         }
                     }
@@ -727,38 +701,35 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                         .offset { IntOffset(0, -30) }
                                         .padding(5.dp, 0.dp)
                                 ) {
-                                    // observe download progress/state for this track by polling the lightweight JSON store
-                                    val downloadState = remember(track.id) { androidx.compose.runtime.mutableStateOf<DownloadEntity?>(null) }
+                                    val downloadState = remember(track.id) { mutableStateOf<DownloadEntity?>(null) }
 
                                     LaunchedEffect(track.id) {
                                         val store = DownloadStore(context)
                                         val start = System.currentTimeMillis()
-                                        val timeout = 60_000L // poll up to 60s for worker start/completion
+                                        val timeout = 60_000L
                                         while (System.currentTimeMillis() - start < timeout) {
                                             val d = store.getById(track.id)
                                             downloadState.value = d
                                             if (d != null && (d.status == "DONE" || d.status == "FAILED")) break
                                             delay(700)
                                         }
-                                        // final read to ensure state reflects completion (if any)
                                         downloadState.value = store.getById(track.id)
                                     }
 
                                     val ds = downloadState.value
 
-                                    // Clickable area that opens the menu (or can be used to inspect progress)
                                     Box(modifier = Modifier.clickable { menuExpandedFor.value = track.id }) {
-                                        when {
-                                            ds?.status == "DOWNLOADING" -> {
+                                        when (ds?.status) {
+                                            "DOWNLOADING" -> {
                                                 val pf = (ds.progress.coerceIn(0, 100)) / 100f
                                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                                     CircularProgressIndicator(
-                                                    progress = { pf },
-                                                    modifier = Modifier.size(28.dp),
-                                                    color = MaterialTheme.colorScheme.secondary,
-                                                    strokeWidth = 2.dp,
-                                                    trackColor = ProgressIndicatorDefaults.circularTrackColor,
-                                                    strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
+                                                        progress = { pf },
+                                                        modifier = Modifier.size(28.dp),
+                                                        color = MaterialTheme.colorScheme.secondary,
+                                                        strokeWidth = 2.dp,
+                                                        trackColor = ProgressIndicatorDefaults.circularIndeterminateTrackColor,
+                                                        strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
                                                     )
                                                     Spacer(modifier = Modifier.height(2.dp))
                                                     Text(
@@ -768,7 +739,7 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                                     )
                                                 }
                                             }
-                                            ds?.status == "DONE" -> {
+                                            "DONE" -> {
                                                 Icon(
                                                     imageVector = Icons.Default.Download,
                                                     contentDescription = null,
@@ -797,13 +768,12 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                         DropdownMenuItem(
                                             text = { Text("Ajouter à une playlist") },
                                             onClick = {
-                                                // open playlist picker dialog for this track
                                                 menuExpandedFor.value = null
                                                 showPlaylistPickerFor.value = track.id
                                             },
                                             leadingIcon = {
                                                 Icon(
-                                                    imageVector = Icons.Default.PlaylistAdd,
+                                                    imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
                                                     contentDescription = null,
                                                     tint = MaterialTheme.colorScheme.primary
                                                 )
@@ -813,10 +783,9 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                             text = { Text("Ajouter aux favoris") },
                                             onClick = {
                                                 menuExpandedFor.value = null
-                                                // ensure the generated track is registered in test data, then add to favorites
                                                 try {
-                                                    com.example.soundwave.data.TestDataProvider.addMusic(track)
-                                                    com.example.soundwave.data.TestDataProvider.addToLiked(track.id)
+                                                    TestDataProvider.addMusic(track)
+                                                    TestDataProvider.addToLiked(track.id)
                                                 } catch (_: Exception) {}
                                                 Toast.makeText(
                                                     context,
@@ -836,7 +805,7 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                             text = { Text("Télécharger") },
                                             onClick = {
                                                 menuExpandedFor.value = null
-                                                // mark as downloading immediately so UI shows feedback while worker starts
+
                                                 coroutineScope.launch {
                                                     try {
                                                         val store = DownloadStore(context)
@@ -844,7 +813,7 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                                     } catch (_: Exception) {
                                                     }
                                                 }
-                                                // enqueue background download worker
+
                                                 val data = workDataOf(
                                                     "trackId" to track.id,
                                                     "audioUrl" to track.audioUrl,
@@ -868,10 +837,9 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                             text = { Text("Partager") },
                                             onClick = {
                                                 menuExpandedFor.value = null
-                                                // attempt to share local file if downloaded, otherwise share remote link
                                                 coroutineScope.launch {
                                                     try {
-                                                        val store = com.example.soundwave.data.local.DownloadStore(context)
+                                                        val store = DownloadStore(context)
                                                         val download = withContext(kotlinx.coroutines.Dispatchers.IO) { store.getById(track.id) }
                                                         if (download?.localPath != null) {
                                                             val file = java.io.File(download.localPath)
@@ -909,7 +877,7 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
 
                             }
                         }
-                    // Playlist picker dialog
+
                     if (showPlaylistPickerFor.value != null) {
                         val tid = showPlaylistPickerFor.value!!
                         AlertDialog(
@@ -921,7 +889,7 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                         Row(modifier = Modifier
                                             .fillMaxWidth()
                                             .clickable {
-                                                // ensure the generated track is registered in test data before adding to playlist
+
                                                 TestDataProvider.addMusic(generationResult.tracks.first { it.id == tid })
                                                 TestDataProvider.addTrackToPlaylist(p.id, tid)
                                                 Toast.makeText(context, "Ajouté à ${p.title}", Toast.LENGTH_SHORT).show()
@@ -949,7 +917,6 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                         )
                     }
 
-                    // Create new playlist dialog
                     if (showCreatePlaylist.value) {
                         AlertDialog(
                             onDismissRequest = { showCreatePlaylist.value = false },

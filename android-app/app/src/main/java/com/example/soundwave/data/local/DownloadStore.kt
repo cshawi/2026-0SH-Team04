@@ -7,10 +7,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
-/**
- * Simple JSON-backed store kept in app files dir to track downloaded tracks.
- * Format: { "tracks": { "trackId": { "trackId": ..., "title": ..., "localPath": ..., "status": ..., "progress": 0 } } }
- */
 class DownloadStore(private val context: Context) {
     private val fileName = "downloads.json"
     private val lock = Any()

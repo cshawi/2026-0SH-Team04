@@ -17,7 +17,6 @@ class HomeViewModel : ViewModel() {
             duration = 210.20,
             createdAt = "34"
         ),
-
         MusicTrack(
             id = "6",
             audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",

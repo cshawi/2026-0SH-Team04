@@ -1,5 +1,6 @@
 package com.example.soundwave.ui.screens
 
+import com.example.soundwave.ui.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,11 +17,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.soundwave.navigation.Screen
 import com.example.soundwave.viewModels.HomeViewModel
+import com.example.soundwave.viewModels.ProfileViewModel
 
 @Composable
 fun SearchScreen(
@@ -31,13 +37,17 @@ fun SearchScreen(
     val searchText by viewModel.searchText
     val results = viewModel.getFilteredMusic()
 
+    val profileVm: ProfileViewModel = viewModel(LocalActivity.current)
+    val userState = profileVm.user
+    val user = userState.value
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
 
-        // 🔥 HEADER
+        // HEADER
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -45,14 +55,28 @@ fun SearchScreen(
         ) {
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
-                        .background(Color.Red, CircleShape),
+                        .size(45.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(Color(0xFF9C4DFF))
+                        .clickable { navController.navigate(Screen.Profile.route) },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("A", color = Color.White)
+                    if (user?.avatarUrl != null) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current).data(user.avatarUrl).crossfade(true).build(),
+                            contentDescription = user.name,
+                            modifier = Modifier.size(45.dp).clip(RoundedCornerShape(50)),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            text = user?.name?.take(2)?.uppercase() ?: "AN",
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(10.dp))
@@ -73,7 +97,7 @@ fun SearchScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // 🔍 SEARCH BAR
+        // SEARCH BAR
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -105,7 +129,7 @@ fun SearchScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // 🔎 RESULTATS
+        // RESULTATS
         if (searchText.isNotEmpty()) {
 
             LazyColumn {

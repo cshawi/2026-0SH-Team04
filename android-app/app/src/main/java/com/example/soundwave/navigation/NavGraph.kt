@@ -21,7 +21,7 @@ import com.example.soundwave.ui.screens.ProfileScreen
 import com.example.soundwave.ui.theme.SoundWaveBackground
 import com.example.soundwave.ui.screens.PlayerScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.soundwave.ui.viewmodel.ProfileViewModel
+import com.example.soundwave.viewmodel.ProfileViewModel
 import com.example.soundwave.ui.screens.*
 
 @Composable
@@ -97,7 +97,8 @@ fun NavGraph() {
 
             }
 
-        }
+            }
+
     }
 
 }

@@ -22,8 +22,7 @@ import com.example.soundwave.models.MusicTrack
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.activity.ComponentActivity
-import androidx.compose.ui.platform.LocalContext
+import com.example.soundwave.ui.LocalActivity
 import com.example.soundwave.navigation.Screen
 import com.example.soundwave.ui.components.AudioPlayerController
 import com.example.soundwave.viewModels.HomeViewModel
@@ -32,9 +31,6 @@ import com.example.soundwave.data.TestDataProvider
 import com.example.soundwave.viewModels.ProfileViewModel
 import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
-
-
-
 
 
 
@@ -55,7 +51,7 @@ fun TopBar(navController: NavController){
             color = Color.White
         )
 
-    val profileVm: ProfileViewModel = viewModel(LocalContext.current as ComponentActivity)
+    val profileVm: ProfileViewModel = viewModel(LocalActivity.current)
         val userState = profileVm.user
         val user = userState.value
 
@@ -141,7 +137,7 @@ fun HomeScreen(
 @Composable
 fun Header(){
 
-    val profileVm: ProfileViewModel = viewModel(LocalContext.current as ComponentActivity)
+    val profileVm: ProfileViewModel = viewModel(LocalActivity.current)
     val userState = profileVm.user
     val user = userState.value
 

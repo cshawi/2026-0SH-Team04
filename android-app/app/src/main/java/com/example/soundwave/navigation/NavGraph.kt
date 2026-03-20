@@ -15,11 +15,15 @@ import com.example.soundwave.ui.screens.CreateScreen
 import com.example.soundwave.ui.screens.HomeScreen
 import com.example.soundwave.ui.screens.ProfileScreen
 import com.example.soundwave.ui.theme.SoundWaveBackground
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.soundwave.ui.viewmodel.ProfileViewModel
+import com.example.soundwave.ui.screens.*
 
 @Composable
 fun NavGraph() {
 
     val navController = rememberNavController()
+    val viewModel: ProfileViewModel = viewModel()
     SoundWaveBackground {
         Scaffold(
             containerColor = Color.Transparent,
@@ -44,7 +48,21 @@ fun NavGraph() {
                 }
 
                 composable(Screen.Profile.route) {
-                    ProfileScreen()
+                    ProfileScreen(navController, viewModel)
+                }
+
+                // 🔐 LOGIN
+                composable("login") {
+                    LoginScreen(navController, viewModel)
+                }
+
+                // 📝 REGISTER
+                composable("register") {
+                    RegisterScreen(navController, viewModel)
+                }
+
+                composable("auth") {
+                    AuthChoiceScreen(navController)
                 }
             }
 

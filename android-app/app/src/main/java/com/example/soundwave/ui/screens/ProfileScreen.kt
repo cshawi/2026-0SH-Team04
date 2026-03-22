@@ -29,11 +29,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.soundwave.models.User
 import com.example.soundwave.navigation.Screen
+import com.example.soundwave.ui.LocalActivity
+import com.example.soundwave.viewModels.LibraryViewModel
 import com.example.soundwave.viewModels.ProfileViewModel
 
 @Composable
@@ -132,7 +135,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            StatsSection()
+            StatsSection(user.id)
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -359,15 +362,21 @@ fun EditUserInfoSection(
 }
 
 @Composable
-fun StatsSection() {
+fun StatsSection(userId: Int?) {
+
+    val vm: LibraryViewModel = viewModel(LocalActivity.current)
+
+    val likedCount = if(userId != null) vm.likedCountForUser() else 0
+    val playlistsCount = if(userId != null) vm.playlistsForUser().count() else 0
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        StatCard(12, "Playlists", Icons.AutoMirrored.Filled.PlaylistPlay)
-        StatCard(48, "Favoris", Icons.Default.Favorite)
+        StatCard(playlistsCount, "Playlists", Icons.AutoMirrored.Filled.PlaylistPlay)
+        StatCard(likedCount, "Favoris", Icons.Default.Favorite)
     }
 }
 

@@ -22,20 +22,15 @@ import com.example.soundwave.models.MusicTrack
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.soundwave.ui.LocalActivity
 import com.example.soundwave.navigation.Screen
 import com.example.soundwave.ui.components.AudioPlayerController
 import com.example.soundwave.viewModels.HomeViewModel
 import com.example.soundwave.util.TimeUtils
 import com.example.soundwave.data.TestDataProvider
-import com.example.soundwave.viewModels.ProfileViewModel
 import coil.request.ImageRequest
-import androidx.compose.ui.platform.LocalContext
-
-
 
 @Composable
-fun TopBar(navController: NavController){
+fun TopBar(navController: NavController, homeViewModel: HomeViewModel){
 
     Row(
         modifier = Modifier
@@ -51,9 +46,7 @@ fun TopBar(navController: NavController){
             color = Color.White
         )
 
-    val profileVm: ProfileViewModel = viewModel(LocalActivity.current)
-        val userState = profileVm.currentUser
-        val user = userState.value
+        val user = homeViewModel.getUser()
 
         Box(
             modifier = Modifier
@@ -104,8 +97,8 @@ fun HomeScreen(
                 .padding(20.dp)
         ) {
 
-            TopBar(navController)
-            Header()
+            TopBar(navController, homeViewModel)
+            Header(homeViewModel)
 
             Spacer(modifier = Modifier.height(15.dp))
 
@@ -135,11 +128,9 @@ fun HomeScreen(
 }
 
 @Composable
-fun Header(){
+fun Header(homeViewModel: HomeViewModel){
 
-    val profileVm: ProfileViewModel = viewModel(LocalActivity.current)
-    val userState = profileVm.currentUser
-    val user = userState.value
+    val user = homeViewModel.getUser()
 
     Column {
 
@@ -233,7 +224,7 @@ fun MusicCard(music: MusicTrack, navController: NavController){
 
             val style = TestDataProvider.styles.find { it.name == music.styleName }
             val styleColor = style?.color ?: Color.Gray
-            val styleName = style?.name ?: music.styleName ?: "Unknown"
+            val styleName = style?.name ?: music.styleName
 
             Box(modifier = Modifier
                 .background(color = styleColor, shape = RoundedCornerShape(8.dp))

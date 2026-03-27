@@ -3,15 +3,15 @@ package com.example.soundwave.viewModels
 import androidx.compose.runtime.mutableStateOf
 import com.example.soundwave.models.User
 import com.example.soundwave.data.TestDataProvider
-import androidx.lifecycle.ViewModel
+import com.example.soundwave.data.repository.UserSession
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.regex.Pattern
 
-class ProfileViewModel : ViewModel() {
+class ProfileViewModel : BaseViewModel() {
 
-    var currentUser = mutableStateOf<User?>(null)
+    var currentUser = mutableStateOf<User?>(UserSession.currentUser.value)
         private set
 
     var isLoading = mutableStateOf(false)
@@ -21,6 +21,10 @@ class ProfileViewModel : ViewModel() {
         private set
 
     private val users = TestDataProvider.users
+
+    init {
+        currentUser.value = UserSession.currentUser.value
+    }
 
     fun register(name: String, email: String, password: String): Boolean {
         when {
@@ -60,6 +64,7 @@ class ProfileViewModel : ViewModel() {
 
         return if (user != null) {
             currentUser.value = user
+            UserSession.login(user)
             errorMessage.value = null
             true
         } else {
@@ -70,10 +75,22 @@ class ProfileViewModel : ViewModel() {
 
     fun updateAvatar(url: String) {
         currentUser.value = currentUser.value?.copy(avatarUrl = url)
+        val user = currentUser.value
+
+        if(user != null) {
+
+            val idx = users.indexOfFirst { it.id == user.id }
+            if (idx >= 0) {
+                users[idx].avatarUrl = user.avatarUrl
+            }
+
+            UserSession.login(user)
+        }
     }
 
     fun logout() {
         currentUser.value = null
+        UserSession.logout()
         errorMessage.value = null
     }
 
@@ -89,6 +106,7 @@ class ProfileViewModel : ViewModel() {
             }
 
             currentUser.value = null
+            UserSession.logout()
             isLoading.value = false
         }
     }
@@ -110,10 +128,23 @@ class ProfileViewModel : ViewModel() {
             isLoading.value = true
             delay(500)
 
-            currentUser.value = currentUser.value?.copy(
-                name = newName,
-                email = newEmail
-            )
+            var user = currentUser.value
+
+            if (user != null) {
+
+                user = user.copy(
+                    name = newName,
+                    email = newEmail
+                )
+
+                val idx = users.indexOfFirst { it.id == user.id }
+                if (idx >= 0) {
+                    users[idx] = user
+                }
+
+                currentUser.value = user
+                UserSession.login(user)
+            }
 
             isLoading.value = false
         }

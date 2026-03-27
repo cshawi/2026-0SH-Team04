@@ -44,7 +44,7 @@ Le développement sera effectué en :
 L’application permettra :
 
 - Interface mobile optimisée
-- Formulaire de génération (style, humeur, durée)
+- Formulaire de génération (style, description, paroles)
 - Lecteur audio intégré
 - Affichage de l’historique
 - Indicateur de progression pendant la génération
@@ -72,7 +72,7 @@ Responsabilités du backend :
 
 ### 3.3 Base de données
 
-- MySQL
+- MongoDB
 - Stockage des utilisateurs et générations
 
 ---
@@ -137,7 +137,7 @@ Grâce à Kotlin, Jetpack Compose et aux frameworks natifs Android (ExoPlayer, O
 
 Le projet consiste à développer une application web/mobile nommée **SoundOfSoul**, permettant aux utilisateurs de générer de la musique automatiquement grâce à une API d’intelligence artificielle.
 
-Contrairement aux plateformes de streaming traditionnelles, SoundOfSoul génère des morceaux uniques selon les préférences de l’utilisateur (style, humeur, tempo, durée).
+Contrairement aux plateformes de streaming traditionnelles, SoundOfSoul génère des morceaux uniques selon les préférences de l’utilisateur (style, titre, description, paroles).
 
 **Objectif principal :** permettre de générer une musique personnalisée en moins de 30 secondes.
 
@@ -171,8 +171,7 @@ Permettre à un utilisateur de :
 - Créer un compte
 - Se connecter
 - Choisir un style musical (pop, afrobeat, instrumental, etc.)
-- Choisir une humeur (happy, sad, chill, intense)
-- Définir la durée
+- Donner les paroles ou une simple description
 - Générer une musique via l’API
 - Écouter le fichier généré
 - Télécharger la musique
@@ -384,11 +383,11 @@ Permettre à un utilisateur de :
 
 ## 4.12 Liste et modélisation des entités
 
-- **Utilisateur**
+- **User**
   - id
-  - nom
+  - name
   - email
-  - motDePasse
+  - password
   - avatarUrl
 
 
@@ -396,19 +395,30 @@ Permettre à un utilisateur de :
   <!-- - quota
   - role -->
 
-- **Generation**
+- **Track**
   - id
-  - titre
+  - title
   - styleName
   - duration
   - createdAt
   - audioUrl
   - coverUrl
+  - description
+  - lyrics
 
 - **Playlist**
   - id
+  - name
+  - createdAt
   - userId
-  - Generations[]
+  - generation_ids[]
+
+- **Play**
+  - id
+  - playedAt
+  - progression
+  - user_id
+  - track_id
   
   
 

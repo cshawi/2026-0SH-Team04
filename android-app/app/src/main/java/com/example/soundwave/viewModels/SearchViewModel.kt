@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class SearchViewModel: ViewModel() {
+class SearchViewModel: BaseViewModel() {
     val query = mutableStateOf("")
     val results = mutableStateOf(listOf<String>())
     val isLoading = mutableStateOf(false)

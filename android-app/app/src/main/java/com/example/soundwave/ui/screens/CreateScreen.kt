@@ -103,6 +103,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import com.example.soundwave.data.local.DownloadStore
 import com.example.soundwave.data.local.DownloadEntity
+import com.example.soundwave.data.repository.UserSession
+import androidx.compose.runtime.collectAsState
 
 @Composable
 fun CreateScreen(navController: NavController, createViewModel: CreateViewModel = viewModel()) {
@@ -121,6 +123,8 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
             createViewModel.onImageSelected(uri)
         }
     )
+
+    val user = createViewModel.getUser()
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -784,8 +788,8 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                             onClick = {
                                                 menuExpandedFor.value = null
                                                 try {
-                                                    TestDataProvider.addMusic(track)
-                                                    TestDataProvider.addToLiked(track.id)
+                                                    createViewModel.addMusic(track)
+                                                    if (user != null) createViewModel.addToLiked(track.id)
                                                 } catch (_: Exception) {}
                                                 Toast.makeText(
                                                     context,
@@ -890,8 +894,8 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                             .fillMaxWidth()
                                             .clickable {
 
-                                                TestDataProvider.addMusic(generationResult.tracks.first { it.id == tid })
-                                                TestDataProvider.addTrackToPlaylist(p.id, tid)
+                                                createViewModel.addMusic(generationResult.tracks.first { it.id == tid })
+                                                createViewModel.addTrackToPlaylist(p.id, tid)
                                                 Toast.makeText(context, "Ajouté à ${p.title}", Toast.LENGTH_SHORT).show()
                                                 showPlaylistPickerFor.value = null
                                             }
@@ -928,18 +932,18 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                             },
                             confirmButton = {
                                 Button(onClick = {
-                                    val tid = showPlaylistPickerFor.value
+                                        val tid = showPlaylistPickerFor.value
                                         if (!newPlaylistTitle.isBlank()) {
-                                        val newId = TestDataProvider.createPlaylist(newPlaylistTitle)
-                                        if (tid != null) {
-                                            TestDataProvider.addMusic(generationResult.tracks.first { it.id == tid })
-                                            TestDataProvider.addTrackToPlaylist(newId, tid)
+                                            val newId = createViewModel.createPlaylist(newPlaylistTitle)
+                                            if (tid != null) {
+                                                createViewModel.addMusic(generationResult.tracks.first { it.id == tid })
+                                                createViewModel.addTrackToPlaylist(newId, tid)
+                                            }
+                                            Toast.makeText(context, "Playlist créée", Toast.LENGTH_SHORT).show()
+                                            newPlaylistTitle = ""
+                                            showCreatePlaylist.value = false
+                                            showPlaylistPickerFor.value = null
                                         }
-                                        Toast.makeText(context, "Playlist créée", Toast.LENGTH_SHORT).show()
-                                        newPlaylistTitle = ""
-                                        showCreatePlaylist.value = false
-                                        showPlaylistPickerFor.value = null
-                                    }
                                 }) { Text("Créer") }
                             },
                             dismissButton = {

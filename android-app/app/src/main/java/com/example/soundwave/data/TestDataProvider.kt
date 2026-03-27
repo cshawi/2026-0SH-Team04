@@ -87,15 +87,7 @@ object TestDataProvider {
         )
     )
 
-    // Add a music track to the test dataset if not already present
-    fun addMusic(track: MusicTrack) {
-        if (musics.none { it.id == track.id }) {
-            musics.add(track)
-        }
-    }
-
     data class PlaylistView(val id: Int, val title: String, val ownerId: Int, val trackIds: List<Int>, val coverUrl: String?)
-
     // Use a snapshot state list so Compose observes changes automatically
     val playlists = mutableStateListOf(
         PlaylistView(id = 1, title = "Détente Chill", ownerId = 1, trackIds = listOf(5, 8), coverUrl = musics.first { it.id == 5 }.coverUrl),
@@ -110,39 +102,17 @@ object TestDataProvider {
         StyleItem(name = "LoFi", icon = Icons.Default.LibraryMusic, color = Color(0xFFFF6D00))
     )
 
-    val likedMusicIds = mutableStateListOf(5, 10, 11)
-
-    val likedMusics: List<MusicTrack>
-        get() = musics.filter { it.id in likedMusicIds }
-
-
-    fun addToLiked(trackId: Int) {
-        if (!likedMusicIds.contains(trackId)) likedMusicIds.add(trackId)
-    }
-
-    fun removeFromLiked(trackId: Int) {
-        likedMusicIds.remove(trackId)
-    }
-
-    // Add a track to a playlist
-    fun addTrackToPlaylist(playlistId: Int, trackId: Int) {
-        val idx = playlists.indexOfFirst { it.id == playlistId }
-        if (idx >= 0) {
-            val p = playlists[idx]
-            if (!p.trackIds.contains(trackId)) {
-                playlists[idx] = p.copy(trackIds = p.trackIds + trackId)
-            }
-        }
-    }
-
-    // Create a new playlist and optionally add the track
-    fun createPlaylist(title: String, ownerId: Int = 1, initialTrackId: Int? = null): Int {
-        val newId = playlists.size + 1
-        val tracks = if (initialTrackId != null) listOf(initialTrackId) else emptyList()
-        val cover = musics.firstOrNull()?.coverUrl
-        val p = PlaylistView(id = newId, title = title, ownerId = ownerId, trackIds = tracks, coverUrl = cover)
-        playlists.add(p)
-        return newId
-    }
+    data class likedMusic(val musicId: Int, val ownerId: Int)
+    val likedMusics = mutableStateListOf(
+        likedMusic(5, 1),
+        likedMusic(10, 1),
+        likedMusic(9, 1),
+        likedMusic(11, 2),
+        likedMusic(6, 2),
+        likedMusic(7, 3),
+        likedMusic(8, 3),
+        likedMusic(5, 3),
+        likedMusic(10, 3),
+    )
 
 }

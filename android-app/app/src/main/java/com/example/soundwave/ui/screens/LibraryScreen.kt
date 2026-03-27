@@ -50,8 +50,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.soundwave.ui.LocalActivity
-import com.example.soundwave.viewModels.ProfileViewModel
 import com.example.soundwave.viewModels.AlbumItem
 import com.example.soundwave.viewModels.LibraryViewModel
 import com.example.soundwave.viewModels.PlaylistItem
@@ -62,14 +60,11 @@ import com.example.soundwave.util.TimeUtils
 
 @Composable
 fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel()) {
-    val likedCount by vm.likedCount
     val albums by vm.albums
-    
-    val profileVm: ProfileViewModel = viewModel(LocalActivity.current)
-    val userId = profileVm.currentUser.value?.id
 
-    val playlists = vm.playlistsForUser(userId)
-    val playlistViews = vm.playlistViewsForUser(userId)
+    val playlists = vm.playlistsForUser()
+    val playlistViews = vm.playlistViewsForUser()
+    val likedMusicsUser = vm.likedMusicsUser()
 
     val expanded = remember { mutableStateMapOf<Int, Boolean>() }
 
@@ -142,7 +137,7 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                 if (showLiked) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        TestDataProvider.likedMusics.forEach { track ->
+                        likedMusicsUser.forEach { track ->
                             val context = LocalContext.current
                             Row(modifier = Modifier
                                 .fillMaxWidth()

@@ -1,6 +1,5 @@
 package com.example.soundwave.ui.screens
 
-import com.example.soundwave.ui.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -25,7 +24,6 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.soundwave.navigation.Screen
 import com.example.soundwave.viewModels.HomeViewModel
-import com.example.soundwave.viewModels.ProfileViewModel
 
 @Composable
 fun SearchScreen(
@@ -36,9 +34,7 @@ fun SearchScreen(
     val searchText by viewModel.searchText
     val results = viewModel.getFilteredMusic()
 
-    val profileVm: ProfileViewModel = viewModel(LocalActivity.current)
-    val userState = profileVm.currentUser
-    val user = userState.value
+    val user = viewModel.getUser()
 
     Column(
         modifier = Modifier

@@ -24,7 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.Route
 
-class CreateViewModel: ViewModel() {
+class CreateViewModel: BaseViewModel() {
 
     var isInstrumental by mutableStateOf(false)
     var isCustomMode by mutableStateOf(false)

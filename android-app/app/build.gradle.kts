@@ -65,8 +65,8 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp.logging)
     implementation(libs.media3.exoplayer)
-    // WorkManager for background downloads
     implementation("androidx.work:work-runtime-ktx:2.8.1")
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

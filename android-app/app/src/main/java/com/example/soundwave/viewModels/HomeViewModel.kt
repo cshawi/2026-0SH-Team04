@@ -1,11 +1,10 @@
 package com.example.soundwave.viewModels
 
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
 import com.example.soundwave.models.MusicTrack
 import com.example.soundwave.data.TestDataProvider
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel : BaseViewModel() {
 
     var searchText = mutableStateOf("")
 

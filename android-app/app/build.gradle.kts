@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.media3.exoplayer)
     implementation("androidx.work:work-runtime-ktx:2.8.1")
+    implementation("androidx.security:security-crypto:1.1.0")
 
 
     testImplementation(libs.junit)

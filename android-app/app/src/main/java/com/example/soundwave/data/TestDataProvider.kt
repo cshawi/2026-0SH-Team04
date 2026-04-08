@@ -11,11 +11,11 @@ import androidx.compose.runtime.mutableStateListOf
 // Provider of in-memory test data
 object TestDataProvider {
 
-    // Users (ids as Int)
+    // Users (ids as String to match server)
     val users = mutableListOf(
-        User(id = 1, name = "Alice", email = "alice@gmail.com", password = "1645132433", avatarUrl = "https://i.pravatar.cc/150?img=1"),
-        User(id = 2, name = "Bob", email = "bob@gmail.com", password = "-1382148687", avatarUrl = "https://i.pravatar.cc/150?img=2"),
-        User(id = 3, name = "Clara", email = "clara@gmail.com", password = "-1349282381", avatarUrl = "https://i.pravatar.cc/150?img=3")
+        User(id = "1", name = "Alice", email = "alice@gmail.com", password = "1645132433", avatarUrl = "https://i.pravatar.cc/150?img=1"),
+        User(id = "2", name = "Bob", email = "bob@gmail.com", password = "-1382148687", avatarUrl = "https://i.pravatar.cc/150?img=2"),
+        User(id = "3", name = "Clara", email = "clara@gmail.com", password = "-1349282381", avatarUrl = "https://i.pravatar.cc/150?img=3")
     )
 
     // Musics table mapped to MusicTrack model
@@ -87,13 +87,13 @@ object TestDataProvider {
         )
     )
 
-    data class PlaylistView(val id: Int, val title: String, val ownerId: Int, val trackIds: List<Int>, val coverUrl: String?)
+    data class PlaylistView(val id: Int, val title: String, val ownerId: String, val trackIds: List<Int>, val coverUrl: String?)
     // Use a snapshot state list so Compose observes changes automatically
     val playlists = mutableStateListOf(
-        PlaylistView(id = 1, title = "Détente Chill", ownerId = 1, trackIds = listOf(5, 8), coverUrl = musics.first { it.id == 5 }.coverUrl),
-        PlaylistView(id = 2, title = "Workout Énergie", ownerId = 2, trackIds = listOf(6, 9, 11, 10), coverUrl = musics.first { it.id == 6 }.coverUrl),
-        PlaylistView(id = 3, title = "Voyage Musical", ownerId = 1, trackIds = listOf(7), coverUrl = musics.first { it.id == 7 }.coverUrl),
-        PlaylistView(id = 4, title = "Soirée Party", ownerId = 3, trackIds = listOf(9, 5, 6, 7, 8), coverUrl = musics.first { it.id == 9 }.coverUrl)
+        PlaylistView(id = 1, title = "Détente Chill", ownerId = "1", trackIds = listOf(5, 8), coverUrl = musics.first { it.id == 5 }.coverUrl),
+        PlaylistView(id = 2, title = "Workout Énergie", ownerId = "2", trackIds = listOf(6, 9, 11, 10), coverUrl = musics.first { it.id == 6 }.coverUrl),
+        PlaylistView(id = 3, title = "Voyage Musical", ownerId = "1", trackIds = listOf(7), coverUrl = musics.first { it.id == 7 }.coverUrl),
+        PlaylistView(id = 4, title = "Soirée Party", ownerId = "3", trackIds = listOf(9, 5, 6, 7, 8), coverUrl = musics.first { it.id == 9 }.coverUrl)
     )
 
     val styles = listOf(
@@ -102,17 +102,17 @@ object TestDataProvider {
         StyleItem(name = "LoFi", icon = Icons.Default.LibraryMusic, color = Color(0xFFFF6D00))
     )
 
-    data class likedMusic(val musicId: Int, val ownerId: Int)
+    data class likedMusic(val musicId: Int, val ownerId: String)
     val likedMusics = mutableStateListOf(
-        likedMusic(5, 1),
-        likedMusic(10, 1),
-        likedMusic(9, 1),
-        likedMusic(11, 2),
-        likedMusic(6, 2),
-        likedMusic(7, 3),
-        likedMusic(8, 3),
-        likedMusic(5, 3),
-        likedMusic(10, 3),
+        likedMusic(5, "1"),
+        likedMusic(10, "1"),
+        likedMusic(9, "1"),
+        likedMusic(11, "2"),
+        likedMusic(6, "2"),
+        likedMusic(7, "3"),
+        likedMusic(8, "3"),
+        likedMusic(5, "3"),
+        likedMusic(10, "3"),
     )
 
 }

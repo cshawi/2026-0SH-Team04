@@ -9,6 +9,8 @@ import com.example.soundwave.data.remote.api.PlayApi
 import com.example.soundwave.data.remote.api.JobApi
 import okhttp3.OkHttpClient
 import com.example.soundwave.data.remote.AuthInterceptor
+import com.example.soundwave.data.remote.AuthRepository
+import com.example.soundwave.data.remote.api.AuthApi
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -20,9 +22,30 @@ object RetrofitProvider {
         level = HttpLoggingInterceptor.Level.BASIC
     }
 
+    private val authHttpClient = OkHttpClient.Builder()
+        .addInterceptor(loggingInterceptor)
+        .build()
+
+    private val retrofitAuth by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(authHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    private val authApi by lazy { retrofitAuth.create(AuthApi::class.java) }
+
+    private val authRepo by lazy { AuthRepository(authApi) }
+
+    // Expose auth repository for callers that need to perform auth operations (e.g. startup refresh)
+    val authRepository: AuthRepository
+        get() = authRepo
+
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .addInterceptor(AuthInterceptor())
+        .authenticator(com.example.soundwave.data.remote.TokenAuthenticator(authRepo))
         .build()
 
     private val retrofit by lazy {

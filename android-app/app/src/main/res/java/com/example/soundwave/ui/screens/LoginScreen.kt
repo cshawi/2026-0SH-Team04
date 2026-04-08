@@ -45,6 +45,7 @@ fun LoginScreen(
     }
 
     val errorMessage = localError.ifEmpty { viewModelError ?: "" }
+    val coroutineScope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -144,10 +145,13 @@ fun LoginScreen(
                         email.isBlank() || password.isBlank() ->
                             localError = "Veuillez remplir tous les champs"
                         else -> {
-                            val success = viewModel.login(email, password)
-                            if (success) {
-                                navController.navigate(Screen.Profile.route) {
-                                    popUpTo("login") { inclusive = true }
+                            coroutineScope.launch {
+                                localError = ""
+                                val success = viewModel.login(email, password)
+                                if (success) {
+                                    navController.navigate(Screen.Profile.route) {
+                                        popUpTo("login") { inclusive = true }
+                                    }
                                 }
                             }
                         }

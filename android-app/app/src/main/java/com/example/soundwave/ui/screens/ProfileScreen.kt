@@ -53,6 +53,7 @@ fun ProfileScreen(
 
     var editedName by remember { mutableStateOf(user?.name ?: "") }
     var editedEmail by remember { mutableStateOf(user?.email ?: "") }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(user) {
         editedName = user?.name ?: ""
@@ -95,9 +96,11 @@ fun ProfileScreen(
             },
             onLogoutClick = {
                 menuExpanded = false
-                viewModel.logout()
-                navController.navigate("auth") {
-                    popUpTo(Screen.Profile.route) { inclusive = true }
+                coroutineScope.launch {
+                    viewModel.logout()
+                    navController.navigate("auth") {
+                        popUpTo(Screen.Profile.route) { inclusive = true }
+                    }
                 }
             },
             onDeleteClick = {
@@ -161,9 +164,11 @@ fun ProfileScreen(
         DeleteConfirmationDialog(
             onConfirm = {
                 showDeleteDialog = false
-                viewModel.deleteAccount()
-                navController.navigate("auth") {
-                    popUpTo(Screen.Profile.route) { inclusive = true }
+                coroutineScope.launch {
+                    viewModel.deleteAccount()
+                    navController.navigate("auth") {
+                        popUpTo(Screen.Profile.route) { inclusive = true }
+                    }
                 }
             },
             onDismiss = { showDeleteDialog = false }
@@ -362,7 +367,7 @@ fun EditUserInfoSection(
 }
 
 @Composable
-fun StatsSection(userId: Int?) {
+fun StatsSection(userId: String?) {
 
     val vm: LibraryViewModel = viewModel(LocalActivity.current)
 

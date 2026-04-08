@@ -10,6 +10,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.DELETE
 
 interface UserApi {
     @POST("api/users/login")
@@ -29,4 +30,7 @@ interface UserApi {
 
     @POST("api/users/logout")
     suspend fun logout(): MessageResponseDto
+
+    @DELETE("api/users")
+    suspend fun deleteMe(): MessageResponseDto
 }

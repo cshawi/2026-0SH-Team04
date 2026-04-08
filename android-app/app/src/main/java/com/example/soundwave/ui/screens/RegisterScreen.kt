@@ -24,6 +24,7 @@ fun RegisterScreen(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var localError by remember { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
 
     val isLoading = viewModel.isLoading.value
     val viewModelError = viewModel.errorMessage.value
@@ -167,10 +168,13 @@ fun RegisterScreen(
                             localError = "Les mots de passe ne correspondent pas"
 
                         else -> {
-                            val success = viewModel.register(username, email, password)
-                            if (success) {
-                                navController.navigate("login") {
-                                    popUpTo("register") { inclusive = true }
+                            coroutineScope.launch {
+                                localError = ""
+                                val success = viewModel.register(username, email, password)
+                                if (success) {
+                                    navController.navigate("login") {
+                                        popUpTo("register") { inclusive = true }
+                                    }
                                 }
                             }
                         }

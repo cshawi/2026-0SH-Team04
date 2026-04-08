@@ -35,7 +35,8 @@ class MainActivity : ComponentActivity() {
                         name = user.username,
                         email = user.access?.email ?: "",
                         password = "",
-                        avatarUrl = user.avatarUrl
+                        avatarUrl = user.avatarUrl,
+                        createdAt = user.createdAt
                     )
 
                     UserSession.login(mappedUser)

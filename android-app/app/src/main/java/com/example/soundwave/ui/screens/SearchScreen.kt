@@ -1,5 +1,6 @@
 package com.example.soundwave.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,6 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.soundwave.data.repository.UserSession
 import com.example.soundwave.navigation.Screen
 import com.example.soundwave.viewModels.HomeViewModel
 

@@ -5,9 +5,6 @@ import com.example.soundwave.data.remote.GenerateMusicResponse
 import com.example.soundwave.data.remote.GenerateStatusResponse
 import com.example.soundwave.data.remote.GeneratedTrack
 import com.example.soundwave.data.remote.dto.track.CreateTrackRequestDto
-import com.example.soundwave.data.remote.dto.track.TrackDto
-import com.example.soundwave.data.repository.TrackRepository
-import com.example.soundwave.data.repository.JobRepository
 import com.example.soundwave.data.remote.UserResponse
 import com.example.soundwave.models.MusicGenerationResult
 import com.example.soundwave.models.MusicTrack
@@ -100,13 +97,13 @@ class MusicRepository(
     }
 
     fun mapUser(response: UserResponse): User {
-        val id = response.id.toIntOrNull() ?: abs(response.id.hashCode())
         return User(
-            id = id,
+            id = response.id,
             name = response.name,
             email = response.email ?: "",
             password = "",
-            avatarUrl = response.avatarUrl
+            avatarUrl = response.avatarUrl,
+            createdAt = ""
         )
     }
 }

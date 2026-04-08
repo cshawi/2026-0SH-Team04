@@ -38,6 +38,8 @@ import com.example.soundwave.navigation.Screen
 import com.example.soundwave.ui.LocalActivity
 import com.example.soundwave.viewModels.LibraryViewModel
 import com.example.soundwave.viewModels.ProfileViewModel
+import com.example.soundwave.data.remote.TokenProvider
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
@@ -62,8 +64,11 @@ fun ProfileScreen(
 
     LaunchedEffect(user) {
         if (user == null) {
-            navController.navigate("auth") {
-                popUpTo(Screen.Profile.route) { inclusive = true }
+            val token = TokenProvider.getToken()
+            if (token == null) {
+                navController.navigate("auth") {
+                    popUpTo(Screen.Profile.route) { inclusive = true }
+                }
             }
         }
     }
@@ -301,7 +306,7 @@ fun UserInfoSection(
             modifier = Modifier.padding(top = 8.dp)
         ) {
             Text(
-                text = "Membre depuis 2024",
+                text = "Membre depuis " + user.createdAt.take(4),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)

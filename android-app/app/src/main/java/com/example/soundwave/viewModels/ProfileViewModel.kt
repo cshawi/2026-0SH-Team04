@@ -5,7 +5,6 @@ import com.example.soundwave.models.User
 import com.example.soundwave.data.TestDataProvider
 import com.example.soundwave.data.repository.UserSession
 import androidx.lifecycle.viewModelScope
-import com.example.soundwave.data.remote.dto.user.UserDto
 import com.example.soundwave.data.repository.UserRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -26,6 +25,11 @@ class ProfileViewModel : BaseViewModel() {
 
     init {
         currentUser.value = UserSession.currentUser.value
+        viewModelScope.launch {
+            UserSession.currentUser.collect { usr ->
+                currentUser.value = usr
+            }
+        }
     }
 
     suspend fun register(name: String, email: String, password: String): Boolean {
@@ -79,7 +83,8 @@ class ProfileViewModel : BaseViewModel() {
                     name = userDto.username,
                     email = userDto.access?.email ?: "",
                     password = "",
-                    avatarUrl = userDto.avatarUrl
+                    avatarUrl = userDto.avatarUrl,
+                    createdAt = userDto.createdAt
                 )
                 currentUser.value = mapped
                 UserSession.login(mapped)
@@ -91,7 +96,8 @@ class ProfileViewModel : BaseViewModel() {
             }
         } else {
             val ex = result.exceptionOrNull()
-            errorMessage.value = ex?.message ?: "Email ou mot de passe incorrect"
+            // errorMessage.value = ex?.message ?: "Email ou mot de passe incorrect"
+            errorMessage.value = "Email ou mot de passe incorrect"
             false
         }
     }

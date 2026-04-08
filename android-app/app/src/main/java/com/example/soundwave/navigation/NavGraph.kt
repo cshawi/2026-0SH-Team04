@@ -1,5 +1,6 @@
 package com.example.soundwave.navigation
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -11,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.soundwave.data.repository.UserSession
 import com.example.soundwave.ui.components.AudioPlayerBar
 import com.example.soundwave.ui.components.BottomNavBar
 import com.example.soundwave.ui.screens.CreateScreen

@@ -13,9 +13,9 @@ object TestDataProvider {
 
     // Users (ids as String to match server)
     val users = mutableListOf(
-        User(id = "1", name = "Alice", email = "alice@gmail.com", password = "1645132433", avatarUrl = "https://i.pravatar.cc/150?img=1"),
-        User(id = "2", name = "Bob", email = "bob@gmail.com", password = "-1382148687", avatarUrl = "https://i.pravatar.cc/150?img=2"),
-        User(id = "3", name = "Clara", email = "clara@gmail.com", password = "-1349282381", avatarUrl = "https://i.pravatar.cc/150?img=3")
+        User(id = "1", name = "Alice", email = "alice@gmail.com", password = "1645132433", avatarUrl = "https://i.pravatar.cc/150?img=1", createdAt = ""),
+        User(id = "2", name = "Bob", email = "bob@gmail.com", password = "-1382148687", avatarUrl = "https://i.pravatar.cc/150?img=2", createdAt = ""),
+        User(id = "3", name = "Clara", email = "clara@gmail.com", password = "-1349282381", avatarUrl = "https://i.pravatar.cc/150?img=3", createdAt = "")
     )
 
     // Musics table mapped to MusicTrack model

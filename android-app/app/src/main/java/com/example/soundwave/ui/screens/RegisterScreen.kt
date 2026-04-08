@@ -13,6 +13,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.soundwave.viewModels.ProfileViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterScreen(

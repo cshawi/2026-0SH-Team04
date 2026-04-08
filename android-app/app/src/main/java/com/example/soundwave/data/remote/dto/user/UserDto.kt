@@ -12,6 +12,6 @@ data class UserDto(
     val access: AccessDto?,
     val avatarUrl: String?,
     val playlists: List<String>?,
-    @SerializedName("createdAt") val createdAt: String?,
-    @SerializedName("updatedAt") val updatedAt: String?
+    @SerializedName("createdAt") val createdAt: String,
+    @SerializedName("updatedAt") val updatedAt: String
 )

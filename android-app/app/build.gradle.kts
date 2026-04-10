@@ -41,6 +41,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    // Ensure only the canonical java source directory is used and ignore accidental copies under res/java
+//    sourceSets {
+//        getByName("main") {
+//            java.srcDirs("src/main/java")
+//        }
+//    }
 }
 
 dependencies {
@@ -66,6 +73,7 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.media3.exoplayer)
     implementation("androidx.work:work-runtime-ktx:2.8.1")
+    implementation("androidx.security:security-crypto:1.1.0")
 
 
     testImplementation(libs.junit)

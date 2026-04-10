@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import android.util.Log
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,22 +21,25 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.soundwave.ui.components.AudioPlayerController
-import com.example.soundwave.viewModels.HomeViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.soundwave.ui.LocalActivity
+import com.example.soundwave.viewModels.PlayerViewModel
 
 @Composable
 fun PlayerScreen(
-    musicId: String,
     navController: NavController,
-    homeViewModel: HomeViewModel = viewModel()
+    playerViewModel: PlayerViewModel? = null
 ) {
 
     val context = LocalContext.current
-    val musicList = homeViewModel.musicList
+    val activity = LocalActivity.current
+    val vm: PlayerViewModel = playerViewModel ?: viewModel(activity)
+    val musicList = vm.musicList
 
-    val idInt = musicId.toIntOrNull()
-    val music = idInt?.let { musicList.find { m -> m.id == it } }
-    val currentIndex = idInt?.let { musicList.indexOfFirst { m -> m.id == it } } ?: -1
+    // log the current musicList for debugging when PlayerScreen composes
+    Log.d("PlayerScreen", "musicList=$musicList")
+
+    val music = vm.currentTrack
 
     val isPlaying = AudioPlayerController.isPlaying
     val duration = AudioPlayerController.durationMs
@@ -128,7 +132,8 @@ fun PlayerScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = "SoundWave",
+
+                text = music?.username ?: "AI",
                 color = Color.LightGray
             )
 
@@ -172,22 +177,18 @@ fun PlayerScreen(
                 IconButton(
                     onClick = {
 
-                        val previous = musicList.getOrNull(currentIndex - 1)
+                        val previous = vm.getPreviousMusic()
 
                         previous?.let {
 
-                            navController.navigate("player/${it.id}")
+                            vm.currentTrack = previous
+                            //navController.navigate("player/${it.id}")
 
-                            AudioPlayerController.play(
-                                context,
-                                it.audioUrl,
-                                it.title,
-                                it.coverUrl,
-                                it.id
-                            )
+                            AudioPlayerController.play(context, it, vm.musicList, vm)
                         }
 
-                    }
+                    },
+                    enabled = musicList.isNotEmpty() && musicList.first() != vm.currentTrack
                 ) {
                     Icon(
                         Icons.Default.SkipPrevious,
@@ -205,13 +206,7 @@ fun PlayerScreen(
                             if (AudioPlayerController.currentUrl == it.audioUrl) {
                                 AudioPlayerController.togglePlayPause()
                             } else {
-                                AudioPlayerController.play(
-                                    context,
-                                    it.audioUrl,
-                                    it.title,
-                                    it.coverUrl,
-                                    it.id
-                                )
+                                AudioPlayerController.play(context, it)
                             }
 
                         }
@@ -245,22 +240,17 @@ fun PlayerScreen(
                 IconButton(
                     onClick = {
 
-                        val next = musicList.getOrNull(currentIndex + 1)
+                        val next = vm.getNextMusic()
 
                         next?.let {
+                            vm.currentTrack = next
+                            //navController.navigate("player/${it.id}")
 
-                            navController.navigate("player/${it.id}")
-
-                                AudioPlayerController.play(
-                                    context,
-                                    it.audioUrl,
-                                    it.title,
-                                    it.coverUrl,
-                                    it.id
-                                )
+                                AudioPlayerController.play(context, it, vm.musicList, vm)
                         }
 
-                    }
+                    },
+                    enabled = musicList.isNotEmpty() && musicList.last() != vm.currentTrack
                 ) {
                     Icon(
                         Icons.Default.SkipNext,

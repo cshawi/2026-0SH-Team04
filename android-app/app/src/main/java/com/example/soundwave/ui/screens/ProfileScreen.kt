@@ -38,6 +38,8 @@ import com.example.soundwave.navigation.Screen
 import com.example.soundwave.ui.LocalActivity
 import com.example.soundwave.viewModels.LibraryViewModel
 import com.example.soundwave.viewModels.ProfileViewModel
+import com.example.soundwave.data.remote.TokenProvider
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
@@ -53,6 +55,7 @@ fun ProfileScreen(
 
     var editedName by remember { mutableStateOf(user?.name ?: "") }
     var editedEmail by remember { mutableStateOf(user?.email ?: "") }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(user) {
         editedName = user?.name ?: ""
@@ -61,8 +64,11 @@ fun ProfileScreen(
 
     LaunchedEffect(user) {
         if (user == null) {
-            navController.navigate("auth") {
-                popUpTo(Screen.Profile.route) { inclusive = true }
+            val token = TokenProvider.getToken()
+            if (token == null) {
+                navController.navigate("auth") {
+                    popUpTo(Screen.Profile.route) { inclusive = true }
+                }
             }
         }
     }
@@ -95,9 +101,11 @@ fun ProfileScreen(
             },
             onLogoutClick = {
                 menuExpanded = false
-                viewModel.logout()
-                navController.navigate("auth") {
-                    popUpTo(Screen.Profile.route) { inclusive = true }
+                coroutineScope.launch {
+                    viewModel.logout()
+                    navController.navigate("auth") {
+                        popUpTo(Screen.Profile.route) { inclusive = true }
+                    }
                 }
             },
             onDeleteClick = {
@@ -161,9 +169,11 @@ fun ProfileScreen(
         DeleteConfirmationDialog(
             onConfirm = {
                 showDeleteDialog = false
-                viewModel.deleteAccount()
-                navController.navigate("auth") {
-                    popUpTo(Screen.Profile.route) { inclusive = true }
+                coroutineScope.launch {
+                    viewModel.deleteAccount()
+                    navController.navigate("auth") {
+                        popUpTo(Screen.Profile.route) { inclusive = true }
+                    }
                 }
             },
             onDismiss = { showDeleteDialog = false }
@@ -296,7 +306,7 @@ fun UserInfoSection(
             modifier = Modifier.padding(top = 8.dp)
         ) {
             Text(
-                text = "Membre depuis 2024",
+                text = "Membre depuis " + user.createdAt.take(4),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
@@ -362,7 +372,7 @@ fun EditUserInfoSection(
 }
 
 @Composable
-fun StatsSection(userId: Int?) {
+fun StatsSection(userId: String?) {
 
     val vm: LibraryViewModel = viewModel(LocalActivity.current)
 

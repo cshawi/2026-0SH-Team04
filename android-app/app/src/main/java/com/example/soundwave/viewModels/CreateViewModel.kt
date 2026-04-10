@@ -8,9 +8,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
-import com.example.soundwave.data.remote.GenerateMusicRequest
+import com.example.soundwave.data.remote.dto.track.CreateTrackRequestDto
+import com.example.soundwave.data.repository.TrackRepository
+import com.example.soundwave.data.repository.JobRepository
 import com.example.soundwave.data.repository.MusicRepository
 import com.example.soundwave.models.MusicGenerationResult
+import com.example.soundwave.models.MusicTrack
 import com.example.soundwave.models.StyleItem
 import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Solid
@@ -49,7 +52,8 @@ class CreateViewModel: BaseViewModel() {
     var generationError by mutableStateOf<String?>(null)
     var generationTaskId by mutableStateOf<String?>(null)
 
-    private val musicRepository = MusicRepository()
+    private val trackRepository = TrackRepository()
+    private val jobRepository = JobRepository()
 
     fun onImageSelected(uri: Uri?) {
         imageUri = uri
@@ -64,35 +68,64 @@ class CreateViewModel: BaseViewModel() {
         generationResult = null
         generationTaskId = null
 
-        val request = GenerateMusicRequest(
+        val createReq = CreateTrackRequestDto(
+            is_personalized = selectedStyle?.name != null,
+            is_instrumental = isInstrumental,
+            prompt = description,
             title = title,
-            description = description,
             style = selectedStyle?.name,
-            instrumental = isInstrumental
+            coverUrl = null
         )
 
         viewModelScope.launch {
-            val startResult = musicRepository.generateMusic(request)
-            val taskId = startResult.getOrElse {
+            val startResult = trackRepository.addTrack(createReq)
+            val resp = startResult.getOrElse {
                 generationError = it.message ?: "Erreur inconnue"
                 isGenerating = false
                 return@launch
-            }.taskId
+            }
 
+            val taskId = resp.jobId ?: resp.taskId
             generationTaskId = taskId
 
-            val maxAttempts = 12
+            val maxAttempts = 22
             val delayMs = 3000L
 
             repeat(maxAttempts) { attempt ->
-                val statusResult = musicRepository.checkStatusMapped(taskId)
-                val status = statusResult.getOrElse {
+                val jobResult = jobRepository.getJobStatus(taskId ?: "")
+                val job = jobResult.getOrElse {
                     generationError = it.message ?: "Erreur inconnue"
                     return@launch
                 }
 
-                if (status.tracks.isNotEmpty()) {
-                    generationResult = status
+                val trackIds = job.tracks ?: emptyList()
+                if (trackIds.isNotEmpty()) {
+                    // fetch each track and map to MusicTrack
+                    val tracks = mutableListOf<MusicTrack>()
+                    for (tid in trackIds) {
+                        val tRes = trackRepository.getTrackById(tid)
+                        tRes.onSuccess { td ->
+                            //val parsedId = td.id.toIntOrNull() ?: kotlin.math.abs(td.id.hashCode())
+                            tracks.add(
+                                MusicTrack(
+                                    id = td.id,
+                                    title = td.title,
+                                    styleName = td.style,
+                                    duration = td.duration?.toInt() ?: 0,
+                                    createdAt = td.createdAt,
+                                    audioUrl = td.audioUrl,
+                                    coverUrl = td.coverUrl,
+                                    username = td.username
+                                )
+                            )
+
+                        }
+                    }
+
+                    generationResult = MusicGenerationResult(
+                        taskId = taskId ?: "",
+                        tracks = tracks
+                    )
                     isGenerating = false
                     return@launch
                 }

@@ -92,6 +92,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.soundwave.ui.LocalActivity
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -99,6 +100,7 @@ import com.example.soundwave.data.TestDataProvider
 import com.example.soundwave.navigation.Screen
 import com.example.soundwave.ui.components.AudioPlayerController
 import com.example.soundwave.viewModels.CreateViewModel
+import com.example.soundwave.viewModels.PlayerViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import com.example.soundwave.data.local.DownloadStore
@@ -110,6 +112,7 @@ import androidx.compose.runtime.collectAsState
 fun CreateScreen(navController: NavController, createViewModel: CreateViewModel = viewModel()) {
     var showAllStyles by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val playerViewModel: PlayerViewModel = viewModel(LocalActivity.current)
     val loadingTransition = rememberInfiniteTransition(label = "loading")
     val loadingDotsProgress by loadingTransition.animateFloat(
         initialValue = 0f,
@@ -547,12 +550,24 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Filled.GraphicEq,
-                        contentDescription = null,
-                        tint = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+
+                    if (createViewModel.isGenerating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                    }
+                    else{
+                        Icon(
+                            imageVector = Icons.Filled.GraphicEq,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+
                     Text(
                         text = if (createViewModel.isGenerating) {
                             val dots = "".padEnd(((loadingDotsProgress.toInt() % 3) + 1), '.')
@@ -563,14 +578,7 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                         color = Color.White,
                         style = MaterialTheme.typography.titleMedium
                     )
-                    if (createViewModel.isGenerating) {
-                        Spacer(modifier = Modifier.width(10.dp))
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
-                    }
+
                 }
             }
 
@@ -599,8 +607,8 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.height(10.dp))
-                    val menuExpandedFor = remember { mutableStateOf<Int?>(null) }
-                    val showPlaylistPickerFor = remember { mutableStateOf<Int?>(null) }
+                    val menuExpandedFor = remember { mutableStateOf<String?>(null) }
+                    val showPlaylistPickerFor = remember { mutableStateOf<String?>(null) }
                     val showCreatePlaylist = remember { mutableStateOf(false) }
                     var newPlaylistTitle by remember { mutableStateOf("") }
 
@@ -622,13 +630,7 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    AudioPlayerController.play(
-                                        context,
-                                        track.audioUrl,
-                                        track.title,
-                                        track.coverUrl,
-                                        track.id
-                                    )
+                                    AudioPlayerController.play(context, track, generationResult.tracks, playerViewModel)
                                 },
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             shape = RoundedCornerShape(16.dp)

@@ -22,6 +22,7 @@ import androidx.navigation.NavController
 import com.example.soundwave.navigation.Screen
 import com.example.soundwave.viewModels.ProfileViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -45,6 +46,7 @@ fun LoginScreen(
     }
 
     val errorMessage = localError.ifEmpty { viewModelError ?: "" }
+    val coroutineScope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -144,10 +146,13 @@ fun LoginScreen(
                         email.isBlank() || password.isBlank() ->
                             localError = "Veuillez remplir tous les champs"
                         else -> {
-                            val success = viewModel.login(email, password)
-                            if (success) {
-                                navController.navigate(Screen.Profile.route) {
-                                    popUpTo("login") { inclusive = true }
+                            coroutineScope.launch {
+                                localError = ""
+                                val success = viewModel.login(email, password)
+                                if (success) {
+                                    navController.navigate(Screen.Profile.route) {
+                                        popUpTo("login") { inclusive = true }
+                                    }
                                 }
                             }
                         }

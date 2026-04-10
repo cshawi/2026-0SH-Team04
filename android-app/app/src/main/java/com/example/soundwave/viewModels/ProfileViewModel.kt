@@ -5,6 +5,7 @@ import com.example.soundwave.models.User
 import com.example.soundwave.data.TestDataProvider
 import com.example.soundwave.data.repository.UserSession
 import androidx.lifecycle.viewModelScope
+import com.example.soundwave.data.repository.UserRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.regex.Pattern
@@ -24,9 +25,14 @@ class ProfileViewModel : BaseViewModel() {
 
     init {
         currentUser.value = UserSession.currentUser.value
+        viewModelScope.launch {
+            UserSession.currentUser.collect { usr ->
+                currentUser.value = usr
+            }
+        }
     }
 
-    fun register(name: String, email: String, password: String): Boolean {
+    suspend fun register(name: String, email: String, password: String): Boolean {
         when {
             name.isBlank() || email.isBlank() || password.isBlank() -> {
                 errorMessage.value = "Tous les champs sont requis"
@@ -40,34 +46,50 @@ class ProfileViewModel : BaseViewModel() {
                 errorMessage.value = "Format d'email invalide"
                 return false
             }
-            users.any { it.email.equals(email, ignoreCase = true) } -> {
-                errorMessage.value = "Cet email est déjà utilisé"
-                return false
-            }
         }
 
-        errorMessage.value = null
-        return true
+        isLoading.value = true
+        val repo = UserRepository()
+        val result = repo.signup(name.trim(), email.trim(), password.trim())
+        isLoading.value = false
+
+        return if (result.isSuccess) {
+            errorMessage.value = null
+            true
+        } else {
+            val ex = result.exceptionOrNull()
+            errorMessage.value = ex?.message ?: "Erreur lors de l'inscription"
+            false
+        }
     }
 
-    fun login(email: String, password: String): Boolean {
+    suspend fun login(email: String, password: String): Boolean {
         if (email.isBlank() || password.isBlank()) {
             errorMessage.value = "Veuillez remplir tous les champs"
             return false
         }
 
-        val hashedPassword = hashPassword(password)
-        val user = users.find {
-            it.email.equals(email, ignoreCase = true) &&
-                    it.password == hashedPassword
-        }
+        isLoading.value = true
+        val repo = UserRepository()
+        val result = repo.login(email.trim(), password)
+        isLoading.value = false
 
-        return if (user != null) {
-            currentUser.value = user
-            UserSession.login(user)
-            errorMessage.value = null
-            true
+        return if (result.isSuccess) {
+            val resp = result.getOrNull()
+            val userDto = resp?.user
+            if (userDto != null) {
+                val mapped = User.fromDto(userDto)
+                currentUser.value = mapped
+                UserSession.login(mapped)
+                errorMessage.value = null
+                true
+            } else {
+                errorMessage.value = "Réponse invalide du serveur"
+                false
+            }
         } else {
+            val ex = result.exceptionOrNull()
+            // errorMessage.value = ex?.message ?: "Email ou mot de passe incorrect"
             errorMessage.value = "Email ou mot de passe incorrect"
             false
         }
@@ -88,26 +110,30 @@ class ProfileViewModel : BaseViewModel() {
         }
     }
 
-    fun logout() {
+    suspend fun logout() {
+        isLoading.value = true
+        val repo = UserRepository()
+        repo.logout()
+        isLoading.value = false
+
         currentUser.value = null
         UserSession.logout()
         errorMessage.value = null
     }
 
-    fun deleteAccount() {
-        viewModelScope.launch {
-            isLoading.value = true
-            errorMessage.value = null
+    suspend fun deleteAccount() {
+        isLoading.value = true
+        errorMessage.value = null
+        val repo = UserRepository()
+        val result = repo.deleteAccount()
+        isLoading.value = false
 
-            delay(500)
-
-            currentUser.value?.let { user ->
-                users.removeAll { it.id == user.id }
-            }
-
+        if (result.isSuccess) {
             currentUser.value = null
             UserSession.logout()
-            isLoading.value = false
+        } else {
+            val ex = result.exceptionOrNull()
+            errorMessage.value = ex?.message ?: "Impossible de supprimer le compte"
         }
     }
 

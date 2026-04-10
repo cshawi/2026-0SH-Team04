@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import kotlin.random.Random
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.compose.foundation.clickable
@@ -22,12 +23,14 @@ import com.example.soundwave.models.MusicTrack
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.soundwave.ui.LocalActivity
 import com.example.soundwave.navigation.Screen
 import com.example.soundwave.ui.components.AudioPlayerController
 import com.example.soundwave.viewModels.HomeViewModel
 import com.example.soundwave.util.TimeUtils
 import com.example.soundwave.data.TestDataProvider
 import coil.request.ImageRequest
+import com.example.soundwave.viewModels.PlayerViewModel
 
 @Composable
 fun TopBar(navController: NavController, homeViewModel: HomeViewModel){
@@ -84,6 +87,10 @@ fun HomeScreen(
 
     val searchText = homeViewModel.searchText.value
     val filteredMusic = homeViewModel.getFilteredMusic()
+    // fetch recommendations once when the HomeScreen composes
+    LaunchedEffect(Unit) {
+        homeViewModel.launchRecommendation()
+    }
 
     Box(
         modifier = Modifier
@@ -104,7 +111,9 @@ fun HomeScreen(
 
 
             Section("Recommandations")
-            MusicRow(filteredMusic , navController)
+            // try to show fetched recommendations from the ViewModel, fallback to filtered list
+            val displayedRecommendations: List<MusicTrack> = if (homeViewModel.recommendationList.isNotEmpty()) homeViewModel.recommendationList else filteredMusic
+            MusicRow(displayedRecommendations, navController)
 
             Spacer(modifier = Modifier.height(25.dp))
 
@@ -114,7 +123,7 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(25.dp))
 
             Section("Découvrir")
-            DiscoverList(filteredMusic, navController)
+            DiscoverList(filteredMusic.reversed(), navController)
 
             Spacer(modifier = Modifier.height(25.dp))
 
@@ -166,32 +175,26 @@ fun Section(title:String){
 @Composable
 fun MusicRow(musics: List<MusicTrack>, navController: NavController){
 
+    val activity = LocalActivity.current
+    val playerViewModel: PlayerViewModel = viewModel(activity)
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(14.dp)
     ){
-
         items(musics){
-            MusicCard(it, navController)
+            MusicCard(it, musics, navController, playerViewModel)
         }
-
     }
-
 }
+
 @Composable
-fun MusicCard(music: MusicTrack, navController: NavController){
+fun MusicCard(music: MusicTrack, parentList: List<MusicTrack>, navController: NavController, playerViewModel: PlayerViewModel){
 
     val context = LocalContext.current
     Column(
         modifier = Modifier
             .width(170.dp)
             .clickable {
-                AudioPlayerController.play(
-                    context,
-                    music.audioUrl,
-                    music.title,
-                    music.coverUrl,
-                    music.id
-                )
+                AudioPlayerController.play(context, music, parentList, playerViewModel)
             }
     ){
 
@@ -223,13 +226,26 @@ fun MusicCard(music: MusicTrack, navController: NavController){
         Row(verticalAlignment = Alignment.CenterVertically) {
 
             val style = TestDataProvider.styles.find { it.name == music.styleName }
-            val styleColor = style?.color ?: Color.Gray
-            val styleName = style?.name ?: music.styleName
+            val fallbackColors = listOf(
+                Color.Gray,
+                Color.Magenta,
+                Color.Red,
+                Color(0xFF9F5DE2),
+                Color(0xFF36D1DC),
+                Color(0xFFFFA726), 
+                Color(0xFFFFD54F), 
+                Color(0xFF66BB6A), 
+                Color(0xFFEC407A),
+                Color(0xFF5C6BC0)  
+            )
+
+            val styleColor = style?.color ?: fallbackColors[Random.nextInt(fallbackColors.size)]
+            val displayName = style?.name ?: (music.username ?: "AI")
 
             Box(modifier = Modifier
                 .background(color = styleColor, shape = RoundedCornerShape(8.dp))
                 .padding(horizontal = 8.dp, vertical = 4.dp)) {
-                Text(styleName, color = Color.White, style = MaterialTheme.typography.bodySmall)
+                Text(displayName, color = Color.White, style = MaterialTheme.typography.bodySmall)
             }
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -258,7 +274,7 @@ fun DiscoverList(
     ){
 
         musics.take(4).forEach { music ->
-            DiscoverItem(music, navController)
+            DiscoverItem(music, musics, navController)
         }
 
     }
@@ -266,9 +282,10 @@ fun DiscoverList(
 }
 
 @Composable
-fun DiscoverItem(music: MusicTrack, navController: NavController){
+fun DiscoverItem(music: MusicTrack, parentList: List<MusicTrack>, navController: NavController){
 
     val context = LocalContext.current
+    val playerViewModel: PlayerViewModel = viewModel(LocalActivity.current)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -277,7 +294,8 @@ fun DiscoverItem(music: MusicTrack, navController: NavController){
                 RoundedCornerShape(18.dp)
             )
             .clickable {
-                navController.navigate("player/${music.id}")
+                AudioPlayerController.play(context, music, parentList, playerViewModel)
+                navController.navigate("player")
             }
             .padding(16.dp),
 
@@ -315,13 +333,7 @@ fun DiscoverItem(music: MusicTrack, navController: NavController){
 
         Button(
             onClick = {
-                AudioPlayerController.play(
-                    context,
-                    music.audioUrl,
-                    music.title,
-                    music.coverUrl,
-                    music.id
-                )
+                AudioPlayerController.play(context, music, parentList, playerViewModel)
             },
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(

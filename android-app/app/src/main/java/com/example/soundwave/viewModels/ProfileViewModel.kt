@@ -78,14 +78,7 @@ class ProfileViewModel : BaseViewModel() {
             val resp = result.getOrNull()
             val userDto = resp?.user
             if (userDto != null) {
-                val mapped = User(
-                    id = userDto.id,
-                    name = userDto.username,
-                    email = userDto.access?.email ?: "",
-                    password = "",
-                    avatarUrl = userDto.avatarUrl,
-                    createdAt = userDto.createdAt
-                )
+                val mapped = User.fromDto(userDto)
                 currentUser.value = mapped
                 UserSession.login(mapped)
                 errorMessage.value = null

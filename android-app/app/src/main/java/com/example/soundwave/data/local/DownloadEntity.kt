@@ -1,7 +1,7 @@
 package com.example.soundwave.data.local
 
 data class DownloadEntity(
-    val trackId: Int,
+    val trackId: String,
     val title: String,
     val localPath: String?,
     val status: String,

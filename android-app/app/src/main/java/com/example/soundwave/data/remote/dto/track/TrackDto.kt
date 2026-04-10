@@ -8,6 +8,7 @@ data class TrackDto(
     val style: String,
     val audioUrl: String,
     @SerializedName("userId") val userId: String?,
+    val username: String?,
     val coverUrl: String,
     val duration: Long?,
     val description: String?,

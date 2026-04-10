@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.soundwave.ui.LocalActivity
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.soundwave.viewModels.AlbumItem
@@ -55,6 +56,7 @@ import com.example.soundwave.viewModels.LibraryViewModel
 import com.example.soundwave.viewModels.PlaylistItem
 import com.example.soundwave.data.TestDataProvider
 import com.example.soundwave.ui.components.AudioPlayerController
+import com.example.soundwave.viewModels.PlayerViewModel
 import com.example.soundwave.util.TimeUtils
 
 
@@ -65,6 +67,7 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
     val playlists = vm.playlistsForUser()
     val playlistViews = vm.playlistViewsForUser()
     val likedMusicsUser = vm.likedMusicsUser()
+    val playerViewModel: PlayerViewModel = viewModel(LocalActivity.current)
 
     val expanded = remember { mutableStateMapOf<Int, Boolean>() }
 
@@ -159,13 +162,8 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                                 }
 
                                 IconButton(onClick = {
-                                    AudioPlayerController.play(
-                                        context,
-                                        track.audioUrl,
-                                        track.title,
-                                                    track.coverUrl,
-                                        track.id
-                                    )
+                                    // when playing from liked list, set player music list to liked items
+                                    AudioPlayerController.play(context, track, likedMusicsUser, playerViewModel)
                                 }) {
                                     Icon(imageVector = Icons.Default.PlayArrow, contentDescription = "Play", tint = Color.White)
                                 }
@@ -244,13 +242,9 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                                             }
 
                                             IconButton(onClick = {
-                                                AudioPlayerController.play(
-                                                        context,
-                                                        track.audioUrl,
-                                                        track.title,
-                                                        track.coverUrl,
-                                                        track.id
-                                                    )
+                                                // build playlist's music list in order and set it on the player
+                                                val playlistMusicList = view.trackIds.mapNotNull { id -> TestDataProvider.musics.firstOrNull { it.id == id } }
+                                                AudioPlayerController.play(context, track, playlistMusicList, playerViewModel)
                                             }) {
                                                 Icon(imageVector = Icons.Default.PlayArrow, contentDescription = "Play", tint = Color.White)
                                             }

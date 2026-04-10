@@ -41,21 +41,21 @@ class DownloadStore(private val context: Context) {
             trackObj.put("progress", entity.progress)
             trackObj.put("updatedAt", entity.updatedAt)
             // JSON object keys must be strings; store under stringified id
-            tracks.put(entity.trackId.toString(), trackObj)
+            tracks.put(entity.trackId, trackObj)
             root.put("tracks", tracks)
             writeJson(root)
         }
     }
-    suspend fun getById(trackId: Int): DownloadEntity? = withContext(Dispatchers.IO) {
+    suspend fun getById(trackId: String): DownloadEntity? = withContext(Dispatchers.IO) {
         synchronized(lock) {
             val root = readJson()
             if (!root.has("tracks")) return@withContext null
             val tracks = root.getJSONObject("tracks")
-            val key = trackId.toString()
+            val key = trackId
             if (!tracks.has(key)) return@withContext null
             val o = tracks.getJSONObject(key)
             return@withContext DownloadEntity(
-                trackId = o.optInt("trackId", trackId),
+                trackId = o.optString("trackId", trackId),
                 title = o.optString("title", ""),
                 localPath = o.optString("localPath", null).let { if (it.isNullOrEmpty()) null else it },
                 status = o.optString("status", ""),
@@ -65,12 +65,12 @@ class DownloadStore(private val context: Context) {
         }
     }
 
-    suspend fun delete(trackId: Int) = withContext(Dispatchers.IO) {
+    suspend fun delete(trackId: String) = withContext(Dispatchers.IO) {
         synchronized(lock) {
             val root = readJson()
             if (!root.has("tracks")) return@withContext
             val tracks = root.getJSONObject("tracks")
-            tracks.remove(trackId.toString())
+            tracks.remove(trackId)
             root.put("tracks", tracks)
             writeJson(root)
         }

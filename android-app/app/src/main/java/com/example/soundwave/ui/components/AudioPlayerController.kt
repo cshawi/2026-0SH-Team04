@@ -1,5 +1,6 @@
 package com.example.soundwave.ui.components
 
+import android.R
 import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -7,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import com.example.soundwave.models.MusicTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -15,7 +17,9 @@ import kotlinx.coroutines.launch
 
 object AudioPlayerController {
 
-    var currentId by mutableStateOf<Int?>(null)
+    var currentTrack by mutableStateOf<MusicTrack?>(null)
+        private set
+    var currentId by mutableStateOf<String?>(null)
         private set
     var currentUrl by mutableStateOf<String?>(null)
         private set
@@ -68,27 +72,29 @@ object AudioPlayerController {
         }
     }
 
-    fun play(context: Context, url: String, title: String, cover: String, id: Int) {
+    fun play(context: Context, track: MusicTrack, musicList: List<MusicTrack>? = null, playerViewModel: com.example.soundwave.viewModels.PlayerViewModel? = null) {
         ensureInitialized(context)
         // set metadata immediately
-        currentUrl = url
-        currentTitle = title
-        currentCoverUrl = cover
-        currentId = id
+        currentTrack = track
+        currentUrl = track.audioUrl
+        currentTitle = track.title
+        currentCoverUrl = track.coverUrl
+        currentId = track.id
+
+        // if a list and playerViewModel are provided, set the player's music list and current track
+        if (playerViewModel != null && musicList != null) {
+            playerViewModel.updateMusicList(musicList.toMutableList())
+            playerViewModel.currentTrack = track
+        }
 
         // check for a downloaded local file and play it if available
         scope.launch {
             val store = com.example.soundwave.data.local.DownloadStore(context)
-            val download = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { store.getById(id) }
-            val uriToPlay = if (download?.localPath != null) android.net.Uri.fromFile(java.io.File(download.localPath)) else android.net.Uri.parse(url)
-            if (currentId != id || player?.currentMediaItem == null) {
-                player?.setMediaItem(MediaItem.fromUri(uriToPlay))
-                player?.prepare()
-            } else {
-                // replace media item if different
-                player?.setMediaItem(MediaItem.fromUri(uriToPlay))
-                player?.prepare()
-            }
+            val download = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { store.getById(track.id) }
+            val uriToPlay = if (download?.localPath != null) android.net.Uri.fromFile(java.io.File(download.localPath)) else android.net.Uri.parse(track.audioUrl)
+            // always set media item to the requested track
+            player?.setMediaItem(MediaItem.fromUri(uriToPlay))
+            player?.prepare()
             player?.play()
             isPlaying = true
         }
@@ -111,6 +117,7 @@ object AudioPlayerController {
         currentTitle = null
         currentUrl = null
         currentCoverUrl = null
+        currentTrack = null
         durationMs = 0L
         positionMs = 0L
         currentId = null

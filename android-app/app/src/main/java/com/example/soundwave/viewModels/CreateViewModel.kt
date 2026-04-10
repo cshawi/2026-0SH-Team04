@@ -88,7 +88,7 @@ class CreateViewModel: BaseViewModel() {
             val taskId = resp.jobId ?: resp.taskId
             generationTaskId = taskId
 
-            val maxAttempts = 12
+            val maxAttempts = 22
             val delayMs = 3000L
 
             repeat(maxAttempts) { attempt ->
@@ -105,22 +105,24 @@ class CreateViewModel: BaseViewModel() {
                     for (tid in trackIds) {
                         val tRes = trackRepository.getTrackById(tid)
                         tRes.onSuccess { td ->
-                            val parsedId = td.id.toIntOrNull() ?: kotlin.math.abs(td.id.hashCode())
+                            //val parsedId = td.id.toIntOrNull() ?: kotlin.math.abs(td.id.hashCode())
                             tracks.add(
                                 MusicTrack(
-                                    id = parsedId,
+                                    id = td.id,
                                     title = td.title,
                                     styleName = td.style,
                                     duration = td.duration?.toInt() ?: 0,
                                     createdAt = td.createdAt,
                                     audioUrl = td.audioUrl,
-                                    coverUrl = td.coverUrl
+                                    coverUrl = td.coverUrl,
+                                    username = td.username
                                 )
                             )
+
                         }
                     }
 
-                    generationResult = com.example.soundwave.models.MusicGenerationResult(
+                    generationResult = MusicGenerationResult(
                         taskId = taskId ?: "",
                         tracks = tracks
                     )

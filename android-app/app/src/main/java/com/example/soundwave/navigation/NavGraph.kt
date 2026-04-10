@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.soundwave.ui.LocalActivity
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -23,6 +24,7 @@ import com.example.soundwave.ui.screens.ProfileScreen
 import com.example.soundwave.ui.theme.SoundWaveBackground
 import com.example.soundwave.ui.screens.PlayerScreen
 import com.example.soundwave.ui.screens.*
+import com.example.soundwave.viewModels.PlayerViewModel
 import com.example.soundwave.viewModels.ProfileViewModel
 
 @Composable
@@ -30,7 +32,8 @@ fun NavGraph() {
 
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-    val viewModel: ProfileViewModel = viewModel()
+    val profileViewModel: ProfileViewModel = viewModel(LocalActivity.current)
+    val playerViewModel: PlayerViewModel = viewModel(LocalActivity.current)
 
     SoundWaveBackground {
             Scaffold(
@@ -71,28 +74,29 @@ fun NavGraph() {
                     }
 
                     composable(Screen.Profile.route) {
-                        ProfileScreen(navController, viewModel)
+                        ProfileScreen(navController, profileViewModel)
                     }
 
                     composable("login") {
-                        LoginScreen(navController, viewModel)
+                        LoginScreen(navController, profileViewModel)
                     }
 
                     composable("register") {
-                        RegisterScreen(navController, viewModel)
+                        RegisterScreen(navController, profileViewModel)
                     }
 
                     composable("auth") {
                         AuthChoiceScreen(navController)
                     }
 
-                    composable("Player/{musicId}") { backStackEntry ->
+                    composable("Player") {
+                        //backStackEntry ->
 
-                        val musicId = backStackEntry.arguments?.getString("musicId") ?: ""
+                        //val musicId = backStackEntry.arguments?.getString("musicId") ?: ""
 
                         PlayerScreen(
-                            musicId = musicId,
-                            navController = navController
+                            navController = navController,
+                            playerViewModel
                         )
                     }
                 }

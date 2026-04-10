@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import android.util.Log
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +34,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.soundwave.ui.LocalActivity
+import com.example.soundwave.viewModels.PlayerViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 
@@ -40,6 +44,8 @@ import coil.request.ImageRequest
 fun AudioPlayerBar(navController: NavController) {
     val hasTrack = AudioPlayerController.currentTitle != null
     AnimatedVisibility(visible = hasTrack) {
+    val activity = LocalActivity.current
+    val playerViewModel: PlayerViewModel = viewModel(activity)
         val durationMs = AudioPlayerController.durationMs
         val positionMs = AudioPlayerController.positionMs
         val progress = if (durationMs > 0) {
@@ -56,7 +62,16 @@ fun AudioPlayerBar(navController: NavController) {
                 .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
                 .padding(horizontal = 16.dp, vertical = 10.dp)
                 .clickable {
-                    navController.navigate("player/${AudioPlayerController.currentId}")
+                    // print the current music list to logcat for debugging
+                    Log.d("Player", "musicList=${playerViewModel.musicList}")
+                    // ensure we update the shared PlayerViewModel before navigating
+                    playerViewModel.currentTrack = AudioPlayerController.currentTrack
+                    // if AudioPlayerController has a current track but the PlayerViewModel has no list,
+                    // try to set a single-item list so next/previous buttons can be enabled appropriately
+                    if (playerViewModel.musicList.isEmpty() && AudioPlayerController.currentTrack != null) {
+                        playerViewModel.updateMusicList(mutableListOf(AudioPlayerController.currentTrack!!))
+                    }
+                    navController.navigate("player")
                 }
         ) {
             Row(

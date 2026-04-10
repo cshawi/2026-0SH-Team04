@@ -81,15 +81,16 @@ class MusicRepository(
                 taskId = status.taskId,
                 tracks = status.tracks.map { track ->
                     // parse id as Int when possible; otherwise derive an Int from hashCode
-                    val parsedId = track.id.toIntOrNull() ?: abs(track.id.hashCode())
+                    //val parsedId = track.id.toIntOrNull() ?: abs(track.id.hashCode())
                     MusicTrack(
-                        id = parsedId,
+                        id = track.id,
                         title = track.title,
                         styleName = "Unknown",
                         duration = track.duration.toInt(),
                         createdAt = track.createdAt,
                         audioUrl = track.audioUrl,
-                        coverUrl = track.imageUrl
+                        coverUrl = track.imageUrl,
+                        username = null
                     )
                 }
             )

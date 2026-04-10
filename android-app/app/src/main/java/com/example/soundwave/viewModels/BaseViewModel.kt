@@ -28,7 +28,7 @@ open class BaseViewModel: ViewModel() {
         }
     }
 
-    fun addToLiked(trackId: Int) {
+    fun addToLiked(trackId: String) {
         val user = getUser()
         if(user != null){
             val music = likedMusic(trackId, user.id)
@@ -36,7 +36,7 @@ open class BaseViewModel: ViewModel() {
         }
     }
 
-    fun removeFromLiked(trackId: Int) {
+    fun removeFromLiked(trackId: String) {
         val user = getUser()
         if (user != null) {
             val music = likedMusic(trackId, user.id)
@@ -44,7 +44,7 @@ open class BaseViewModel: ViewModel() {
         }
     }
 
-    fun addTrackToPlaylist(playlistId: Int, trackId: Int) {
+    fun addTrackToPlaylist(playlistId: Int, trackId: String) {
         val idx = playlists.indexOfFirst { it.id == playlistId }
         if (idx >= 0) {
             val p = playlists[idx]
@@ -55,7 +55,7 @@ open class BaseViewModel: ViewModel() {
     }
 
     // Create a new playlist and optionally add the track
-    fun createPlaylist(title: String, initialTrackId: Int? = null): Int {
+    fun createPlaylist(title: String, initialTrackId: String? = null): Int {
         val user = getUser() ?: return 0
 
         val newId = playlists.size + 1

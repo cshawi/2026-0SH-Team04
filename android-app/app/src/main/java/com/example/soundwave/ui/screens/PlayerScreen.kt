@@ -132,7 +132,8 @@ fun PlayerScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = "SoundWave",
+
+                text = music?.username ?: "AI",
                 color = Color.LightGray
             )
 

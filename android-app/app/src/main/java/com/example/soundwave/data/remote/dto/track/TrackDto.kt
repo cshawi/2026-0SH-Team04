@@ -10,7 +10,7 @@ data class TrackDto(
     @SerializedName("userId") val userId: String?,
     val username: String?,
     val coverUrl: String,
-    val duration: Long?,
+    val duration: Double?,
     val description: String?,
     val lyrics: String?,
     @SerializedName("createdAt") val createdAt: String,

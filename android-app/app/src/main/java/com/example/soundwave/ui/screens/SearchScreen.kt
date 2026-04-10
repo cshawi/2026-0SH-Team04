@@ -12,6 +12,10 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,7 +29,10 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.soundwave.data.repository.UserSession
 import com.example.soundwave.navigation.Screen
+import com.example.soundwave.ui.LocalActivity
+import com.example.soundwave.ui.components.AudioPlayerController
 import com.example.soundwave.viewModels.HomeViewModel
+import com.example.soundwave.viewModels.PlayerViewModel
 
 @Composable
 fun SearchScreen(
@@ -35,6 +42,20 @@ fun SearchScreen(
 
     val searchText by viewModel.searchText
     val results = viewModel.getFilteredMusic()
+    val context = LocalContext.current
+    val playerViewModel: PlayerViewModel = viewModel(LocalActivity.current)
+
+    // trigger remote search when the search text changes, debounced to avoid spamming the API
+    LaunchedEffect(Unit) {
+        snapshotFlow { viewModel.searchText.value }
+            .debounce(300)
+            .distinctUntilChanged()
+            .collectLatest { current ->
+                if (current.isNotBlank()) {
+                    viewModel.searchTracks()
+                }
+            }
+    }
 
     val user = viewModel.getUser()
 
@@ -134,7 +155,8 @@ fun SearchScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                navController.navigate("player/${music.id}")
+                                AudioPlayerController.play(context, music, listOf(music), playerViewModel)
+                                // navController.navigate("player")
                             }
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -144,13 +166,18 @@ fun SearchScreen(
                             model = music.coverUrl,
                             contentDescription = null,
                             modifier = Modifier
-                                .size(60.dp)
+                                .size(80.dp)
                                 .clip(RoundedCornerShape(10.dp))
                         )
 
                         Spacer(modifier = Modifier.width(12.dp))
 
-                        Text(music.title, color = Color.White)
+                        Column() {
+                            val displayName = music.username ?: (music.username ?: "AI")
+                            Text(music.title, color = Color.White)
+                            Text(displayName, color = Color.Gray, style = MaterialTheme.typography.bodyMedium )
+                        }
+
                     }
                 }
             }

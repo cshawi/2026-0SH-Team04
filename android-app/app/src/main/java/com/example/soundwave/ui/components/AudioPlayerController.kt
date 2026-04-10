@@ -2,6 +2,7 @@ package com.example.soundwave.ui.components
 
 import android.R
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,6 +10,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.soundwave.models.MusicTrack
+import com.example.soundwave.events.AppEvents
+import com.example.soundwave.viewModels.PlayerViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -37,18 +40,42 @@ object AudioPlayerController {
     private var player: ExoPlayer? = null
     private var progressJob: Job? = null
     private val scope = CoroutineScope(Dispatchers.Main.immediate)
+    private var appContext: Context? = null
+    // Keep a reference to the last provided playerViewModel and music list so the controller
+    // can detect when the currently playing track is the last in the list and emit events.
+    private var lastPlayerViewModel: PlayerViewModel? = null
+    private var lastMusicList: List<MusicTrack>? = null
+    private var prevTrackId: String? = null
+    private val emittedForTrack = mutableSetOf<String>()
 
     fun ensureInitialized(context: Context) {
         if (player != null) return
-        val appContext = context.applicationContext
-        player = ExoPlayer.Builder(appContext).build().apply {
+        val applicationContext = context.applicationContext
+        appContext = applicationContext
+        player = ExoPlayer.Builder(applicationContext).build().apply {
             addListener(object : Player.Listener {
+
                 override fun onIsPlayingChanged(isPlayingNow: Boolean) {
                     this@AudioPlayerController.isPlaying = isPlayingNow
                 }
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     durationMs = (player?.duration ?: 0L).coerceAtLeast(0L)
+                    // when playback ends, try to advance to the next track if available
+                    if (playbackState == Player.STATE_ENDED) {
+                        try {
+                            val next = lastPlayerViewModel?.getNextMusic()
+                            if (next != null && appContext != null) {
+                                // play next track using the same music list and playerViewModel
+                                play(appContext!!, next, lastMusicList, lastPlayerViewModel)
+                            } else {
+                                // no next track: stop playback and clear state
+                                stop()
+                            }
+                        } catch (_: Exception) {
+                            // ignore any exception to avoid crashing the listener
+                        }
+                    }
                 }
             })
         }
@@ -66,6 +93,36 @@ object AudioPlayerController {
                 } else {
                     durationMs = 0L
                     positionMs = 0L
+                }
+                // detect when current track changes and reset per-track emitted flags
+                val current = currentTrack
+                if (current?.id != prevTrackId) {
+                    prevTrackId = current?.id
+                    // clear any emitted state for new track (we only track emissions per-track)
+                    emittedForTrack.clear()
+                }
+
+                // If we have a music list and the current track is the last element,
+                // emit a recommendation trigger once when we reach half of the track or near the end.
+                try {
+                    val list = lastMusicList
+                    if (current != null && list != null && durationMs > 0L) {
+                        val index = list.indexOfFirst { it.id == current.id }
+                        val isLast = index != -1 && index == list.lastIndex
+                        if (isLast) {
+                            val trackId = current.id
+                            val halfThreshold = durationMs / 2
+
+                            //val endThreshold = (durationMs - 1000L).coerceAtLeast(0L)
+                            val already = emittedForTrack.contains(trackId)
+                            if (!already && positionMs >= halfThreshold) {
+                                AppEvents.tryEmitRecommendationTrigger()
+                                emittedForTrack.add(trackId)
+                            }
+                        }
+                    }
+                } catch (_: Exception) {
+                    // be defensive — don't allow progress updates to crash
                 }
                 delay(500L)
             }
@@ -85,6 +142,12 @@ object AudioPlayerController {
         if (playerViewModel != null && musicList != null) {
             playerViewModel.updateMusicList(musicList.toMutableList())
             playerViewModel.currentTrack = track
+            lastPlayerViewModel = playerViewModel
+            lastMusicList = musicList
+        } else {
+            // clear references if none were provided
+            lastPlayerViewModel = null
+            lastMusicList = null
         }
 
         // check for a downloaded local file and play it if available
@@ -121,6 +184,10 @@ object AudioPlayerController {
         durationMs = 0L
         positionMs = 0L
         currentId = null
+        lastPlayerViewModel = null
+        lastMusicList = null
+        prevTrackId = null
+        emittedForTrack.clear()
     }
     fun seekTo(position: Long) {
         player?.seekTo(position)

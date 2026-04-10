@@ -62,9 +62,6 @@ fun AudioPlayerBar(navController: NavController) {
                 .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
                 .padding(horizontal = 16.dp, vertical = 10.dp)
                 .clickable {
-                    // print the current music list to logcat for debugging
-                    Log.d("Player", "musicList=${playerViewModel.musicList}")
-                    // ensure we update the shared PlayerViewModel before navigating
                     playerViewModel.currentTrack = AudioPlayerController.currentTrack
                     // if AudioPlayerController has a current track but the PlayerViewModel has no list,
                     // try to set a single-item list so next/previous buttons can be enabled appropriately

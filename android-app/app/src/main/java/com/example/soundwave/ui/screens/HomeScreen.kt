@@ -86,10 +86,19 @@ fun HomeScreen(
 ) {
 
     val searchText = homeViewModel.searchText.value
-    val filteredMusic = homeViewModel.getFilteredMusic()
-    // fetch recommendations once when the HomeScreen composes
+    val searchResults = homeViewModel.searchResults
+    val filtered = homeViewModel.musicList
+    // fetch recommendations and discover list once when the HomeScreen composes
     LaunchedEffect(Unit) {
         homeViewModel.launchRecommendation()
+        homeViewModel.fetchDiscover()
+        // initial search (populates searchResults) if there's a value
+        if (searchText.isNotBlank()) homeViewModel.searchTracks()
+    }
+
+    // re-run search when the search text changes
+    LaunchedEffect(searchText) {
+        homeViewModel.searchTracks()
     }
 
     Box(
@@ -111,19 +120,19 @@ fun HomeScreen(
 
 
             Section("Recommandations")
-            // try to show fetched recommendations from the ViewModel, fallback to filtered list
-            val displayedRecommendations: List<MusicTrack> = if (homeViewModel.recommendationList.isNotEmpty()) homeViewModel.recommendationList else filteredMusic
+            // try to show fetched recommendations from the ViewModel, fallback to search results
+            val displayedRecommendations: List<MusicTrack> = if (homeViewModel.recommendationList.isNotEmpty()) homeViewModel.recommendationList else searchResults
             MusicRow(displayedRecommendations, navController)
 
             Spacer(modifier = Modifier.height(25.dp))
 
             Section("Genres")
-            MusicRow(filteredMusic, navController)
+            MusicRow(filtered, navController)
 
             Spacer(modifier = Modifier.height(25.dp))
 
             Section("Découvrir")
-            DiscoverList(filteredMusic.reversed(), navController)
+            DiscoverList(homeViewModel.discoverList.toList(), navController)
 
             Spacer(modifier = Modifier.height(25.dp))
 
@@ -240,7 +249,7 @@ fun MusicCard(music: MusicTrack, parentList: List<MusicTrack>, navController: Na
             )
 
             val styleColor = style?.color ?: fallbackColors[Random.nextInt(fallbackColors.size)]
-            val displayName = style?.name ?: (music.username ?: "AI")
+            val displayName = music.username ?: (music.username ?: "AI")
 
             Box(modifier = Modifier
                 .background(color = styleColor, shape = RoundedCornerShape(8.dp))
@@ -295,7 +304,7 @@ fun DiscoverItem(music: MusicTrack, parentList: List<MusicTrack>, navController:
             )
             .clickable {
                 AudioPlayerController.play(context, music, parentList, playerViewModel)
-                navController.navigate("player")
+                //navController.navigate("player")
             }
             .padding(16.dp),
 

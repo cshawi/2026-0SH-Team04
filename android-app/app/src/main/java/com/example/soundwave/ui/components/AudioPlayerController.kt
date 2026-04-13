@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.example.soundwave.data.repository.PlayRepository
 
 object AudioPlayerController {
 
@@ -47,6 +48,11 @@ object AudioPlayerController {
     private var lastMusicList: List<MusicTrack>? = null
     private var prevTrackId: String? = null
     private val emittedForTrack = mutableSetOf<String>()
+    private val listenedTracks = mutableSetOf<String>()
+    private val listenedTimePerTrack = mutableMapOf<String, Long>()
+
+    private val LISTEN_THRESHOLD_MS = 15_000L
+    private val playRepository = PlayRepository()
 
     fun ensureInitialized(context: Context) {
         if (player != null) return
@@ -105,6 +111,30 @@ object AudioPlayerController {
                 // If we have a music list and the current track is the last element,
                 // emit a recommendation trigger once when we reach half of the track or near the end.
                 try {
+                    if (
+                        current != null &&
+                        exo?.isPlaying == true
+                    ) {
+
+                        val trackId = current.id
+                        listenedTimePerTrack[trackId] =
+                            (listenedTimePerTrack[trackId] ?: 0L) + 500L
+
+                        val totalListenTime = listenedTimePerTrack[trackId] ?: 0L
+
+                        if (
+                            totalListenTime >= LISTEN_THRESHOLD_MS &&
+                            !listenedTracks.contains(trackId)
+                        ) {
+
+                            scope.launch {
+                                playRepository.addPlay(current.id)
+                            }
+
+                            listenedTracks.add(trackId)
+                        }
+                    }
+
                     val list = lastMusicList
                     if (current != null && list != null && durationMs > 0L) {
                         val index = list.indexOfFirst { it.id == current.id }

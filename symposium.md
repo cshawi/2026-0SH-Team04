@@ -13,13 +13,16 @@ Un table vous sera installée avec accès à une prise électrique. Vous devez l
 
 ### Ce que nous avons déjà en main :
 
-1. ÉLÉMENT #1
-2. ÉLÉMENT #1
+1. Ordinateur Portable appartenant à Pharel
+2. Téléphone Android appartenant à Rikielle
 
 ### Ce que nous aurons besoin provenant de l'école :
 
-1. ÉLÉMENT #1
-2. ÉLÉMENT #1
+1. Fond pour générer les musiques(15$)
+2. Cable USB-c vers USB-c pouvant transferer les données
+3. Ecran (peut importe la taille)
+4. Cable HDMI
+5. Speakers (Pour pouvoir mieux écouter la musique)
 
 ## Heure d'arrivée
 

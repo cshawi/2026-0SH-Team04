@@ -150,4 +150,15 @@ class HomeViewModel : BaseViewModel() {
         refreshRecommendations(limit)
     }
 
+
+
+    // filtre musique par genre
+    fun getMusicByGenre(genre: String): List<MusicTrack> {
+        val normalized = genre.trim().lowercase()
+
+        return musicList.filter {
+            it.styleName?.trim()?.lowercase() == normalized
+        }
+    }
+
 }

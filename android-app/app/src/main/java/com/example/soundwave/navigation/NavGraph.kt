@@ -99,6 +99,16 @@ fun NavGraph() {
                             playerViewModel
                         )
                     }
+
+                    composable("genre/{name}") { backStackEntry ->
+
+                        val name = backStackEntry.arguments?.getString("name") ?: ""
+
+                        GenreScreen(
+                            genreName = name,
+                            navController = navController
+                        )
+                    }
                 }
             }
     }

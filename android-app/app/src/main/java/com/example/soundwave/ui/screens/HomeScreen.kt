@@ -32,6 +32,21 @@ import com.example.soundwave.data.TestDataProvider
 import coil.request.ImageRequest
 import com.example.soundwave.viewModels.PlayerViewModel
 
+
+data class Genre(
+    val name: String,
+    val imageUrl: String
+)
+
+
+val genres = listOf(
+    Genre("Pop", "https://i.imgur.com/8Km9tLL.jpg"),
+    Genre("Rap", "https://i.imgur.com/1bX5QH6.jpg"),
+    Genre("Afro", "https://i.imgur.com/Z6XbK0H.jpg"),
+    Genre("Jazz", "https://i.imgur.com/Wv7G9YV.jpg"),
+    Genre("Rock", "https://i.imgur.com/2nCt3Sbl.jpg")
+)
+
 @Composable
 fun TopBar(navController: NavController, homeViewModel: HomeViewModel){
 
@@ -96,7 +111,7 @@ fun HomeScreen(
         if (searchText.isNotBlank()) homeViewModel.searchTracks()
     }
 
-    // re-run search when the search text changes
+
     LaunchedEffect(searchText) {
         homeViewModel.searchTracks()
     }
@@ -118,18 +133,25 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(15.dp))
 
+            Section("Recommandation")
+            MusicRow(filtered, navController)
 
-            Section("Recommandations")
+            Spacer(modifier = Modifier.height(25.dp))
+
+
+            Section("Genres")
+
+
+            GenreRow(genres, navController)
+
+            Spacer(modifier = Modifier.height(20.dp))
             // try to show fetched recommendations from the ViewModel, fallback to search results
             val displayedRecommendations: List<MusicTrack> = if (homeViewModel.recommendationList.isNotEmpty()) homeViewModel.recommendationList else searchResults
             MusicRow(displayedRecommendations, navController)
 
             Spacer(modifier = Modifier.height(25.dp))
 
-            Section("Genres")
-            MusicRow(filtered, navController)
 
-            Spacer(modifier = Modifier.height(25.dp))
 
             Section("Découvrir")
             DiscoverList(homeViewModel.discoverList.toList(), navController)
@@ -143,6 +165,48 @@ fun HomeScreen(
 
     }
 
+}
+
+@Composable
+fun GenreRow(genres: List<Genre>, navController: NavController) {
+
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        items(genres) { genre ->
+            GenreCard(genre, navController)
+        }
+    }
+}
+@Composable
+fun GenreCard(genre: Genre, navController: NavController) {
+
+
+    val color = when (genre.name.lowercase()) {
+        "pop" -> Color(0xFF1B5E20)
+        "rap" -> Color(0xFFF57F17)
+        "afro" -> Color(0xFF0D47A1)
+        "jazz" -> Color(0xFFB71C1C)
+        "rock" -> Color(0xFF4A148C)
+        else -> Color.Gray
+    }
+
+    Box(
+        modifier = Modifier
+            .size(140.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(color)
+            .clickable {
+                navController.navigate("genre/${genre.name}")
+            },
+        contentAlignment = Alignment.Center
+    ) {
+
+        Text(
+            text = genre.name,
+            color = Color.White,
+            style = MaterialTheme.typography.titleLarge
+        )
+
+    }
 }
 
 @Composable

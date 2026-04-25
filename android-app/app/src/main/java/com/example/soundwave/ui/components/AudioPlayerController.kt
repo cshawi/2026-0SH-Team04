@@ -1,6 +1,5 @@
 package com.example.soundwave.ui.components
 
-import android.R
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -18,6 +17,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.example.soundwave.data.repository.PlayRepository
+import androidx.core.net.toUri
 
 object AudioPlayerController {
 
@@ -57,7 +57,7 @@ object AudioPlayerController {
     // Last position (ms) sent to server per playId — used to prevent updates after seeks backward
     private val lastSentPositionPerPlay = mutableMapOf<String, Long>()
 
-    private val LISTEN_THRESHOLD_MS = 15_000L
+    private const val LISTEN_THRESHOLD_MS = 15_000L
     private val playRepository = PlayRepository()
 
     fun ensureInitialized(context: Context) {
@@ -218,7 +218,7 @@ object AudioPlayerController {
         }
     }
 
-    fun play(context: Context, track: MusicTrack, musicList: List<MusicTrack>? = null, playerViewModel: com.example.soundwave.viewModels.PlayerViewModel? = null) {
+    fun play(context: Context, track: MusicTrack, musicList: List<MusicTrack>? = null, playerViewModel: PlayerViewModel? = null) {
         ensureInitialized(context)
         // reset session for previous track so returning later will create a new play after threshold
         val previous = currentTrack
@@ -258,8 +258,8 @@ object AudioPlayerController {
         // check for a downloaded local file and play it if available
         scope.launch {
             val store = com.example.soundwave.data.local.DownloadStore(context)
-            val download = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { store.getById(track.id) }
-            val uriToPlay = if (download?.localPath != null) android.net.Uri.fromFile(java.io.File(download.localPath)) else android.net.Uri.parse(track.audioUrl)
+            val download = kotlinx.coroutines.withContext(Dispatchers.IO) { store.getById(track.id) }
+            val uriToPlay = if (download?.localPath != null) android.net.Uri.fromFile(java.io.File(download.localPath)) else track.audioUrl.toUri()
             // always set media item to the requested track
             player?.setMediaItem(MediaItem.fromUri(uriToPlay))
             player?.prepare()

@@ -11,6 +11,10 @@ class PlayRepository {
         api.addPlay(CreatePlayRequestDto(trackId, progression))
     }
 
+    suspend fun updatePlay(playId: String, progression: Double): Result<PlayDto> = runCatching {
+        api.updatePlay(playId, com.example.soundwave.data.remote.dto.play.UpdatePlayRequestDto(progression))
+    }
+
     suspend fun getAllPlays(): Result<List<PlayDto>> = runCatching {
         api.getAllPlays()
     }

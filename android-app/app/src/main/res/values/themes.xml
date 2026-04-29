@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.SoundWave" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.SoundWave" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="windowSplashScreenBackground">#0A0A0F</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo_splash</item>
+        <item name="postSplashScreenTheme">@style/Theme.SoundWave.Main</item>
+    </style>
+
+    <style name="Theme.SoundWave.Main" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+    </style>
 </resources>

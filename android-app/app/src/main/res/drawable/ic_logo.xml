@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="150dp"
+    android:height="150dp"
+    android:viewportWidth="150"
+    android:viewportHeight="150">
+
+    <!-- Simple filled circle + wave to act as placeholder logo -->
+    <path
+        android:fillColor="#FF00C6FF"
+        android:pathData="M75,0 A75,75 0 1,1 74.9,0 Z" />
+
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="4"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M30,85 L50,60 L70,95 L90,50 L110,105" />
+
+</vector>

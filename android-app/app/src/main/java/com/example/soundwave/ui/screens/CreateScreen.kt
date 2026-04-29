@@ -752,6 +752,7 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                     }
                                     Spacer(modifier = Modifier.height(4.dp))
                                 }
+
                                 Box(
                                     modifier = Modifier
                                         .offset { IntOffset(0, -30) }
@@ -930,7 +931,6 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                         )
                                     }
                                 }
-
                             }
                         }
 

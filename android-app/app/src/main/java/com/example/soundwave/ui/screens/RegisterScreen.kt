@@ -3,17 +3,22 @@ package com.example.soundwave.ui.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.input.InputTransformation.Companion.keyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.soundwave.viewModels.ProfileViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 
 @Composable
 fun RegisterScreen(
@@ -31,6 +36,7 @@ fun RegisterScreen(
     val viewModelError = viewModel.errorMessage.value
 
     val errorMessage = localError.ifEmpty { viewModelError ?: "" }
+    val keyBoardController = LocalSoftwareKeyboardController.current
 
     Box(
         modifier = Modifier
@@ -78,6 +84,14 @@ fun RegisterScreen(
                 label = { Text("Nom d'utilisateur") },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading,
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        keyBoardController?.hide()
+                    }
+                ),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
@@ -97,6 +111,14 @@ fun RegisterScreen(
                 label = { Text("Email") },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading,
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        keyBoardController?.hide()
+                    }
+                ),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
@@ -117,6 +139,14 @@ fun RegisterScreen(
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation(),
                 enabled = !isLoading,
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        keyBoardController?.hide()
+                    }
+                ),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
@@ -137,6 +167,14 @@ fun RegisterScreen(
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation(),
                 enabled = !isLoading,
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        keyBoardController?.hide()
+                    }
+                ),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,

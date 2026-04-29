@@ -105,8 +105,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import com.example.soundwave.data.local.DownloadStore
 import com.example.soundwave.data.local.DownloadEntity
-import com.example.soundwave.data.repository.UserSession
-import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 
 @Composable
 fun CreateScreen(navController: NavController, createViewModel: CreateViewModel = viewModel()) {
@@ -128,8 +133,8 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
     )
 
     val user = createViewModel.getUser()
-
     val coroutineScope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
 
 
     LaunchedEffect(Unit) {
@@ -376,6 +381,24 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                             placeholder = { Text("Ex: Rêves Électriques") },
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                Box(
+                                    modifier = Modifier
+                                        .size(35.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary)
+                                        .clickable {
+                                            focusManager.clearFocus()
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Terminer",
+                                        tint = Color.White
+                                    )
+                                }
+                            },
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                                 unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -519,6 +542,24 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                         placeholder = { Text(if (createViewModel.isCustomMode && !createViewModel.isInstrumental) "Écrivez vos propres paroles, deux couplets pour un meilleur résultat." else "Décris ton idée, ton ambiance, ton style...") },
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = {
+                            Box(
+                                modifier = Modifier
+                                .size(35.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary)
+                                .clickable {
+                                    focusManager.clearFocus()
+                                },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Terminer",
+                                    tint = Color.White
+                                )
+                            }
+                        },
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -959,6 +1000,33 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                 }
             }
         }
+
+//        if (isKeyboardVisible) {
+//
+//            Box(
+//                modifier = Modifier
+//                    .fillMaxSize()
+//                    .padding(top = 85.dp, end = 16.dp),
+//                contentAlignment = Alignment.TopEnd
+//            ) {
+//                Box(
+//                    modifier = Modifier
+//                        .size(44.dp)
+//                        .clip(CircleShape)
+//                        .background(MaterialTheme.colorScheme.primary)
+//                        .clickable {
+//                            keyboardController?.hide()
+//                        },
+//                    contentAlignment = Alignment.Center
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.Default.Check,
+//                        contentDescription = "Terminer",
+//                        tint = Color.White
+//                    )
+//                }
+//            }
+//        }
     }
 }
 

@@ -33,14 +33,16 @@ class LibraryViewModel : BaseViewModel() {
         return likedMusicsUser().size
     }
 
-    fun playlistsForUser(): List<PlaylistItem> {
-        val user = getUser() ?: return emptyList()
-        return serverPlaylists.map { p -> PlaylistItem(title = p.name, trackCount = p.tracks?.size  ?: 0) }
+    // make serverPlaylists observable so Compose recomposes when it changes
+    private val serverPlaylists = mutableStateListOf<com.example.soundwave.data.remote.dto.playlist.PlaylistDto>()
+
+    // derived states for UI consumption
+    private val playlistItemsState = derivedStateOf {
+        serverPlaylists.map { p -> PlaylistItem(title = p.name, trackCount = p.tracks?.size ?: 0) }
     }
 
-    fun playlistViewsForUser(): List<PlaylistView> {
-        val user = getUser() ?: return emptyList()
-        return serverPlaylists.map { p ->
+    private val playlistViewsState = derivedStateOf {
+        serverPlaylists.map { p ->
             val ownerId = getUser()?.id ?: "0"
             val cover = if (p.tracks != null && p.tracks.isNotEmpty()) {
                 p.tracks.firstOrNull()?.coverUrl
@@ -54,7 +56,17 @@ class LibraryViewModel : BaseViewModel() {
         }
     }
 
-    private val serverPlaylists: MutableList<com.example.soundwave.data.remote.dto.playlist.PlaylistDto> = mutableListOf()
+    fun playlistsForUser(): List<PlaylistItem> {
+        val user = getUser() ?: return emptyList()
+        return playlistItemsState.value
+    }
+
+    fun playlistViewsForUser(): List<PlaylistView> {
+        val user = getUser() ?: return emptyList()
+        return playlistViewsState.value
+    }
+
+    // serverPlaylists moved above as observable state
 
     fun addTrackToPlaylistServer(playlistId: String, trackId: String, onComplete: ((Boolean) -> Unit)? = null) {
         val repo = playlistRepository

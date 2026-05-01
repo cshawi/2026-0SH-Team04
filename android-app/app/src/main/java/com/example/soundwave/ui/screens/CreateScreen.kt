@@ -107,9 +107,10 @@ import com.example.soundwave.data.local.DownloadStore
 import com.example.soundwave.data.local.DownloadEntity
 import com.example.soundwave.data.repository.UserSession
 import androidx.compose.runtime.collectAsState
+import com.example.soundwave.viewModels.LibraryViewModel
 
 @Composable
-fun CreateScreen(navController: NavController, createViewModel: CreateViewModel = viewModel(), libraryViewModel: com.example.soundwave.viewModels.LibraryViewModel = viewModel()) {
+fun CreateScreen(navController: NavController, createViewModel: CreateViewModel = viewModel(), libraryViewModel: LibraryViewModel = viewModel()) {
     var showAllStyles by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val playerViewModel: PlayerViewModel = viewModel(LocalActivity.current)
@@ -128,6 +129,11 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
     )
 
     val user = createViewModel.getUser()
+
+    // ensure playlists are loaded from server for the picker
+    LaunchedEffect(Unit) {
+        libraryViewModel.loadPlaylists()
+    }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -891,23 +897,24 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                             title = { Text("Ajouter à la playlist") },
                             text = {
                                 Column {
-                                            libraryViewModel.playlistViewsForUser().forEach { p ->
-                                            Row(modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clickable {
-                                                    val track = generationResult.tracks.first { it.id == tid }
-                                                    createViewModel.addMusic(track)
-                                                    libraryViewModel.addTrackToPlaylistServer(p.id, tid) {
-                                                        val title = if (it) p.title else "playlist"
-                                                        Toast.makeText(context, "Ajouté à $title", Toast.LENGTH_SHORT).show()
-                                                    }
-                                                    showPlaylistPickerFor.value = null
-                                                }
-                                                .padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                                Text(text = p.title, modifier = Modifier.weight(1f))
-                                                Text(text = "${p.trackIds.size} tracks", color = Color.Gray)
+                                    libraryViewModel.playlistViewsForUser().forEach { p ->
+                                    Row(modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            val track = generationResult.tracks.first { it.id == tid }
+                                            createViewModel.addMusic(track)
+                                            libraryViewModel.addTrackToPlaylistServer(p.id, tid) {
+                                                val title = if (it) p.title else "playlist"
+                                                Toast.makeText(context, "Ajouté à $title", Toast.LENGTH_SHORT).show()
                                             }
+                                            showPlaylistPickerFor.value = null
                                         }
+                                        .padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                            Text(text = p.title, modifier = Modifier.weight(1f))
+                                            val count = libraryViewModel.getPlaylistTrackCount(p.id)
+                                            Text(text = "${count} tracks", color = Color.Gray)
+                                        }
+                                    }
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                                         Button(onClick = {

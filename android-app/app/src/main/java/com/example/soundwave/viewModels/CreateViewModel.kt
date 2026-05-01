@@ -109,7 +109,7 @@ class CreateViewModel: BaseViewModel() {
             val taskId = resp.jobId ?: resp.taskId
             generationTaskId = taskId
 
-            val maxAttempts = 22
+            val maxAttempts = 50
             val delayMs = 3000L
 
             repeat(maxAttempts) { attempt ->

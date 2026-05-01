@@ -1,6 +1,7 @@
 package com.example.soundwave.ui.screens
 
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -76,6 +77,9 @@ import com.example.soundwave.util.TimeUtils
 import com.example.soundwave.viewModels.AlbumItem
 import com.example.soundwave.viewModels.LibraryViewModel
 import com.example.soundwave.viewModels.PlayerViewModel
+import com.example.soundwave.viewModels.CreateViewModel
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import com.example.soundwave.viewModels.PlaylistItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -202,6 +206,8 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
+            Log.d("LScreen", playlists.toString())
+
             if(!playlists.isEmpty()){
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(text = "Playlists", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
@@ -218,7 +224,7 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                         rowItems.forEach { p ->
                             val view = playlistViews.firstOrNull { it.title == p.title }
                             if (view != null) {
-                                PlaylistCard(view = view, modifier = Modifier.weight(1f)) {
+                                PlaylistCard(view = view, modifier = Modifier.weight(1f), onClick = {
                                     val current = expanded[view.id] ?: false
                                     if (current) {
                                         expanded.remove(view.id)
@@ -227,7 +233,7 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                                         expanded[view.id] = true
                                         showLiked = false
                                     }
-                                }
+                                })
                             } else {
                                 PlaylistCard(item = p, modifier = Modifier.weight(1f))
                             }
@@ -352,8 +358,11 @@ fun MusicListItem(track: com.example.soundwave.models.MusicTrack, vm: LibraryVie
                                 Icon(imageVector = Icons.Default.Favorite, contentDescription = "Like", tint = Color(0xFFB65EFF))
                             }
 
-                            val menuExpanded = remember { mutableStateOf(false) }
-                            val showPlaylistPicker = remember { mutableStateOf(false) }
+                                            val menuExpanded = remember { mutableStateOf(false) }
+                                            val showPlaylistPickerFor = remember { mutableStateOf<String?>(null) }
+                                            val showCreatePlaylist = remember { mutableStateOf(false) }
+                                            var newPlaylistTitle by remember { mutableStateOf("") }
+                                            val createViewModel: CreateViewModel = viewModel()
                             val downloadState = remember(track.id) { mutableStateOf<DownloadEntity?>(null) }
 
                             LaunchedEffect(track.id) {
@@ -415,7 +424,7 @@ fun MusicListItem(track: com.example.soundwave.models.MusicTrack, vm: LibraryVie
                                     text = { Text("Ajouter à une playlist") },
                                     onClick = {
                                         menuExpanded.value = false
-                                        showPlaylistPicker.value = true
+                                        showPlaylistPickerFor.value = track.id
                                     },
                                     leadingIcon = {
                                         Icon(
@@ -514,34 +523,79 @@ fun MusicListItem(track: com.example.soundwave.models.MusicTrack, vm: LibraryVie
                                 )
                             }
 
-                            if (showPlaylistPicker.value) {
+                            if (showPlaylistPickerFor.value != null) {
+                                val tid = showPlaylistPickerFor.value!!
                                 AlertDialog(
-                                    onDismissRequest = { showPlaylistPicker.value = false },
+                                    onDismissRequest = { showPlaylistPickerFor.value = null },
                                     title = { Text("Ajouter à la playlist") },
                                     text = {
                                         Column {
-                                            vm.playlistsForUser().forEach { p ->
+                                            vm.playlistViewsForUser().forEach { p ->
                                                 Row(modifier = Modifier
                                                     .fillMaxWidth()
                                                     .clickable {
+                                                        // add to local collection and to server
                                                         vm.addMusic(track)
-                                                        vm.addTrackToPlaylist(vm.playlistsForUser().indexOf(p)+1, track.id)
-                                                        showPlaylistPicker.value = false
-                                                        Toast.makeText(context, "Ajouté à ${p.title}", Toast.LENGTH_SHORT).show()
+                                                        vm.addTrackToPlaylistServer(p.id, track.id) { success ->
+                                                            if (success) Toast.makeText(context, "Ajouté à ${p.title}", Toast.LENGTH_SHORT).show()
+                                                            else Toast.makeText(context, "Erreur lors de l'ajout", Toast.LENGTH_SHORT).show()
+                                                        }
+                                                        showPlaylistPickerFor.value = null
                                                     }
-                                                    .padding(8.dp)) {
-                                                    Text(p.title)
+                                                    .padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                    Text(text = p.title, modifier = Modifier.weight(1f))
+                                                    val count = vm.getPlaylistTrackCount(p.id)
+                                                    Text(text = "$count tracks", color = Color.Gray)
                                                 }
                                             }
-                                            if (vm.playlistsForUser().isEmpty()) {
-                                                Text("Aucune playlist trouvée", color = Color.Gray)
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                                Button(onClick = { showCreatePlaylist.value = true }) {
+                                                    Text("Créer nouvelle playlist")
+                                                }
                                             }
                                         }
                                     },
-                                    confirmButton = {
-                                        androidx.compose.material3.TextButton(onClick = { showPlaylistPicker.value = false }) {
-                                            Text("Fermer")
+                                    confirmButton = {},
+                                    dismissButton = {
+                                        Button(onClick = { showPlaylistPickerFor.value = null }) { Text("Fermer") }
+                                    }
+                                )
+                            }
+
+                            if (showCreatePlaylist.value) {
+                                AlertDialog(
+                                    onDismissRequest = { showCreatePlaylist.value = false },
+                                    title = { Text("Créer une playlist") },
+                                    text = {
+                                        Column {
+                                            OutlinedTextField(value = newPlaylistTitle, onValueChange = { newPlaylistTitle = it }, label = { Text("Nom de la playlist") })
                                         }
+                                    },
+                                    confirmButton = {
+                                        Button(onClick = {
+                                            val tid = showPlaylistPickerFor.value
+                                            if (!newPlaylistTitle.isBlank()) {
+                                                coroutineScope.launch {
+                                                    val newId = createViewModel.createPlaylistOnServer(newPlaylistTitle)
+                                                    if (newId != null) {
+                                                        if (tid != null) {
+                                                            vm.addMusic(track)
+                                                            vm.addTrackToPlaylistServer(newId, tid) {}
+                                                        }
+                                                        Toast.makeText(context, "Playlist créée", Toast.LENGTH_SHORT).show()
+                                                    } else {
+                                                        Toast.makeText(context, "Impossible de créer la playlist", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                    newPlaylistTitle = ""
+                                                    showCreatePlaylist.value = false
+                                                    showPlaylistPickerFor.value = null
+                                                }
+                                            }
+                                        }) { Text("Créer") }
+                                    },
+                                    dismissButton = {
+                                        Button(onClick = { showCreatePlaylist.value = false }) { Text("Annuler") }
                                     }
                                 )
                             }
@@ -593,19 +647,23 @@ fun PlaylistCard(view: PlaylistView, modifier: Modifier = Modifier, onClick: (()
                     .background(brush = Brush.linearGradient(listOf(Color(0xFF5B8CFF), Color(0xFF9B59FF)))))
             }
 
-            val owner = TestDataProvider.users.firstOrNull { it.id == view.ownerId }
+            // derive owner info from ViewModel user or fallback
+            val ownerUser = vm.getUser()
+            val ownerName = ownerUser?.name ?: "AI"
+            val ownerAvatar = ownerUser?.avatarUrl
+
             Column(modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(12.dp)) {
                 Text(view.title, color = Color.White, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 val count = vm.getPlaylistTrackCount(view.id)
-                Text(text = "${count} tracks • ${owner?.name ?: "AI"}", color = Color(0xCCFFFFFF), fontSize = 12.sp)
+                Text(text = "$count tracks • $ownerName", color = Color(0xCCFFFFFF), fontSize = 12.sp)
             }
 
-            if (owner?.avatarUrl != null) {
+            if (!ownerAvatar.isNullOrEmpty()) {
                 AsyncImage(
-                    model = owner.avatarUrl,
-                    contentDescription = owner.name,
+                    model = ownerAvatar,
+                    contentDescription = ownerName,
                     modifier = Modifier
                         .size(36.dp)
                         .align(Alignment.TopStart)

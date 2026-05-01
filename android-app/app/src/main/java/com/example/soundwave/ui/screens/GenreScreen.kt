@@ -43,9 +43,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,6 +73,7 @@ import com.example.soundwave.util.TimeUtils
 import com.example.soundwave.viewModels.HomeViewModel
 import com.example.soundwave.viewModels.LibraryViewModel
 import com.example.soundwave.viewModels.PlayerViewModel
+import com.example.soundwave.viewModels.CreateViewModel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -221,7 +224,7 @@ fun MusicListItem(music: MusicTrack) {
 fun PopularTrackItem(music: MusicTrack) {
     val context = LocalContext.current
     val playerViewModel: PlayerViewModel = viewModel(LocalActivity.current)
-    val vm: com.example.soundwave.viewModels.LibraryViewModel = viewModel()
+    val vm: LibraryViewModel = viewModel()
     val coroutineScope = rememberCoroutineScope()
     Row(
         modifier = Modifier
@@ -261,8 +264,8 @@ fun PopularTrackItem(music: MusicTrack) {
             Icon(imageVector = Icons.Default.Favorite, contentDescription = "Like", tint = Color(0xFFEE82FF))
         }
 
-        val menuExpanded = remember { mutableStateOf(false) }
-        val showPlaylistPicker = remember { mutableStateOf(false) }
+    val menuExpanded = remember { mutableStateOf(false) }
+    val showPlaylistPickerFor = remember { mutableStateOf<String?>(null) }
         val downloadState = remember(music.id) { mutableStateOf<DownloadEntity?>(null) }
 
         LaunchedEffect(music.id) {
@@ -322,10 +325,10 @@ fun PopularTrackItem(music: MusicTrack) {
         ) {
             DropdownMenuItem(
                 text = { Text("Ajouter à une playlist") },
-                onClick = {
-                    menuExpanded.value = false
-                    showPlaylistPicker.value = true
-                },
+                    onClick = {
+                        menuExpanded.value = false
+                        showPlaylistPickerFor.value = music.id
+                    },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
@@ -423,36 +426,84 @@ fun PopularTrackItem(music: MusicTrack) {
             )
         }
 
-        if (showPlaylistPicker.value) {
+        val createViewModel: CreateViewModel = viewModel()
+        val showCreatePlaylist = remember { mutableStateOf(false) }
+        var newPlaylistTitle by remember { mutableStateOf("") }
+
+        if (showPlaylistPickerFor.value != null) {
+            val tid = showPlaylistPickerFor.value!!
             AlertDialog(
-                onDismissRequest = { showPlaylistPicker.value = false },
+                onDismissRequest = { showPlaylistPickerFor.value = null },
                 title = { Text("Ajouter à la playlist") },
                 text = {
                     Column {
-                        vm.playlistsForUser().forEach { p ->
+                        vm.playlistViewsForUser().forEach { p ->
                             Row(modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
+                                    // add to local collection and to server
                                     vm.addMusic(music)
-                                    libraryViewModel.addTrackToPlaylistServer(p.id, music.id) { success ->
+                                    vm.addTrackToPlaylistServer(p.id, music.id) { success ->
                                         if (success) Toast.makeText(context, "Ajouté à ${p.title}", Toast.LENGTH_SHORT).show()
                                         else Toast.makeText(context, "Erreur lors de l'ajout", Toast.LENGTH_SHORT).show()
                                     }
-                                    showPlaylistPicker.value = false
+                                    showPlaylistPickerFor.value = null
                                 }
-                                .padding(8.dp)) {
-                                Text(p.title)
+                                .padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = p.title, modifier = Modifier.weight(1f))
+                                val count = vm.getPlaylistTrackCount(p.id)
+                                Text(text = "${count} tracks", color = Color.Gray)
                             }
                         }
-                        if (vm.playlistsForUser().isEmpty()) {
-                            Text("Aucune playlist trouvée", color = Color.Gray)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            Button(onClick = { showCreatePlaylist.value = true }) {
+                                Text("Créer nouvelle playlist")
+                            }
                         }
                     }
                 },
-                confirmButton = {
-                    androidx.compose.material3.TextButton(onClick = { showPlaylistPicker.value = false }) {
-                        Text("Fermer")
+                confirmButton = {},
+                dismissButton = {
+                    Button(onClick = { showPlaylistPickerFor.value = null }) { Text("Fermer") }
+                }
+            )
+        }
+
+        if (showCreatePlaylist.value) {
+            AlertDialog(
+                onDismissRequest = { showCreatePlaylist.value = false },
+                title = { Text("Créer une playlist") },
+                text = {
+                    Column {
+                        OutlinedTextField(value = newPlaylistTitle, onValueChange = { newPlaylistTitle = it }, label = { Text("Nom de la playlist") })
                     }
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        val tid = showPlaylistPickerFor.value
+                        if (!newPlaylistTitle.isBlank()) {
+                            coroutineScope.launch {
+                                val newId = createViewModel.createPlaylistOnServer(newPlaylistTitle)
+                                if (newId != null) {
+                                    if (tid != null) {
+                                        // use the music currently in scope
+                                        createViewModel.addMusic(music)
+                                        vm.addTrackToPlaylistServer(newId, tid) {}
+                                    }
+                                    Toast.makeText(context, "Playlist créée", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "Impossible de créer la playlist", Toast.LENGTH_SHORT).show()
+                                }
+                                newPlaylistTitle = ""
+                                showCreatePlaylist.value = false
+                                showPlaylistPickerFor.value = null
+                            }
+                        }
+                    }) { Text("Créer") }
+                },
+                dismissButton = {
+                    Button(onClick = { showCreatePlaylist.value = false }) { Text("Annuler") }
                 }
             )
         }
@@ -472,7 +523,6 @@ fun PopularTrackItem(music: MusicTrack) {
                         if (!newPlaylistTitle.isBlank()) {
                             val newId = createViewModel.createPlaylist(newPlaylistTitle)
                             if (tid != null) {
-                                createViewModel.addMusic(generationResult.tracks.first { it.id == tid })
                                 createViewModel.addTrackToPlaylist(newId, tid)
                             }
                             Toast.makeText(context, "Playlist créée", Toast.LENGTH_SHORT).show()

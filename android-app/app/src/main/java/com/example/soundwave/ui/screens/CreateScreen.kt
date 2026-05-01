@@ -109,7 +109,7 @@ import com.example.soundwave.data.repository.UserSession
 import androidx.compose.runtime.collectAsState
 
 @Composable
-fun CreateScreen(navController: NavController, createViewModel: CreateViewModel = viewModel()) {
+fun CreateScreen(navController: NavController, createViewModel: CreateViewModel = viewModel(), libraryViewModel: com.example.soundwave.viewModels.LibraryViewModel = viewModel()) {
     var showAllStyles by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val playerViewModel: PlayerViewModel = viewModel(LocalActivity.current)
@@ -891,21 +891,23 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                             title = { Text("Ajouter à la playlist") },
                             text = {
                                 Column {
-                                    TestDataProvider.playlists.forEach { p ->
-                                        Row(modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-
-                                                createViewModel.addMusic(generationResult.tracks.first { it.id == tid })
-                                                createViewModel.addTrackToPlaylist(p.id, tid)
-                                                Toast.makeText(context, "Ajouté à ${p.title}", Toast.LENGTH_SHORT).show()
-                                                showPlaylistPickerFor.value = null
+                                            libraryViewModel.playlistViewsForUser().forEach { p ->
+                                            Row(modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    val track = generationResult.tracks.first { it.id == tid }
+                                                    createViewModel.addMusic(track)
+                                                    libraryViewModel.addTrackToPlaylistServer(p.id, tid) {
+                                                        val title = if (it) p.title else "playlist"
+                                                        Toast.makeText(context, "Ajouté à $title", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                    showPlaylistPickerFor.value = null
+                                                }
+                                                .padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                Text(text = p.title, modifier = Modifier.weight(1f))
+                                                Text(text = "${p.trackIds.size} tracks", color = Color.Gray)
                                             }
-                                            .padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                            Text(text = p.title, modifier = Modifier.weight(1f))
-                                            Text(text = "${p.trackIds.size} tracks", color = Color.Gray)
                                         }
-                                    }
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                                         Button(onClick = {
@@ -936,15 +938,22 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                 Button(onClick = {
                                         val tid = showPlaylistPickerFor.value
                                         if (!newPlaylistTitle.isBlank()) {
-                                            val newId = createViewModel.createPlaylist(newPlaylistTitle)
-                                            if (tid != null) {
-                                                createViewModel.addMusic(generationResult.tracks.first { it.id == tid })
-                                                createViewModel.addTrackToPlaylist(newId, tid)
+                                            coroutineScope.launch {
+                                                val newId = createViewModel.createPlaylistOnServer(newPlaylistTitle)
+                                                if (newId != null) {
+                                                    if (tid != null) {
+                                                        val track = generationResult.tracks.first { it.id == tid }
+                                                        createViewModel.addMusic(track)
+                                                        libraryViewModel.addTrackToPlaylistServer(newId, tid) {}
+                                                    }
+                                                    Toast.makeText(context, "Playlist créée", Toast.LENGTH_SHORT).show()
+                                                } else {
+                                                    Toast.makeText(context, "Impossible de créer la playlist", Toast.LENGTH_SHORT).show()
+                                                }
+                                                newPlaylistTitle = ""
+                                                showCreatePlaylist.value = false
+                                                showPlaylistPickerFor.value = null
                                             }
-                                            Toast.makeText(context, "Playlist créée", Toast.LENGTH_SHORT).show()
-                                            newPlaylistTitle = ""
-                                            showCreatePlaylist.value = false
-                                            showPlaylistPickerFor.value = null
                                         }
                                 }) { Text("Créer") }
                             },

@@ -33,7 +33,9 @@ import com.example.soundwave.ui.LocalActivity
 import com.example.soundwave.ui.components.AudioPlayerController
 import com.example.soundwave.viewModels.HomeViewModel
 import com.example.soundwave.viewModels.PlayerViewModel
+import kotlinx.coroutines.FlowPreview
 
+@OptIn(FlowPreview::class)
 @Composable
 fun SearchScreen(
     navController: NavController,

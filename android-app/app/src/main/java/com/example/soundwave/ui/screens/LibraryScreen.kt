@@ -293,7 +293,6 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Vertical list of generated tracks (replaces Albums carousel)
                 LaunchedEffect(Unit) { vm.loadGenerated() }
                 Column(modifier = Modifier.fillMaxWidth()) {
                     generatedList.forEach { track ->
@@ -350,7 +349,12 @@ fun MusicListItem(track: com.example.soundwave.models.MusicTrack, vm: LibraryVie
                     Column(horizontalAlignment = Alignment.End) {
                         Text(text = TimeUtils.formatSecondsToMMSS(track.duration), color = Color(0xFFB0B0C2), fontSize = 12.sp)
                         Row {
-                            IconButton(onClick = { /* like action */ vm.addMusic(track); vm.addToLiked(track.id) }) {
+                            IconButton(onClick = {
+                                try {
+                                    vm.addMusic(track)
+                                    if (vm.getUser() != null) vm.addToLiked(track.id)
+                                } catch (_: Exception) {}
+                            }) {
                                 Icon(imageVector = Icons.Default.Favorite, contentDescription = "Like", tint = Color(0xFFB65EFF))
                             }
 

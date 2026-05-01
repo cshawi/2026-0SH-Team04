@@ -1,51 +1,54 @@
 package com.example.soundwave.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import kotlin.random.Random
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.platform.LocalContext
-import com.example.soundwave.models.MusicTrack
-import coil.compose.AsyncImage
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.soundwave.ui.LocalActivity
-import com.example.soundwave.navigation.Screen
-import com.example.soundwave.ui.components.AudioPlayerController
-import com.example.soundwave.viewModels.HomeViewModel
-import com.example.soundwave.util.TimeUtils
-import com.example.soundwave.data.TestDataProvider
+import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.soundwave.models.MusicTrack
+import com.example.soundwave.navigation.Screen
+import com.example.soundwave.ui.LocalActivity
+import com.example.soundwave.ui.components.AudioPlayerController
+import com.example.soundwave.util.TimeUtils
+import com.example.soundwave.viewModels.HomeViewModel
 import com.example.soundwave.viewModels.PlayerViewModel
+import kotlin.random.Random
 
-
-data class Genre(
-    val name: String,
-    val imageUrl: String
-)
-
-
-val genres = listOf(
-    Genre("Pop", "https://i.imgur.com/8Km9tLL.jpg"),
-    Genre("Rap", "https://i.imgur.com/1bX5QH6.jpg"),
-    Genre("Afro", "https://i.imgur.com/Z6XbK0H.jpg"),
-    Genre("Jazz", "https://i.imgur.com/Wv7G9YV.jpg"),
-    Genre("Rock", "https://i.imgur.com/2nCt3Sbl.jpg")
-)
+val genresFallbackNames = listOf("Pop", "Rap", "Afro", "Jazz", "Rock")
 
 @Composable
 fun TopBar(navController: NavController, homeViewModel: HomeViewModel){
@@ -102,7 +105,6 @@ fun HomeScreen(
 
     val searchText = homeViewModel.searchText.value
     val searchResults = homeViewModel.searchResults
-    val filtered = homeViewModel.musicList
     // fetch recommendations and discover list once when the HomeScreen composes
     LaunchedEffect(Unit) {
         homeViewModel.launchRecommendation()
@@ -128,30 +130,26 @@ fun HomeScreen(
                 .padding(20.dp)
         ) {
 
+   
             TopBar(navController, homeViewModel)
             Header(homeViewModel)
 
             Spacer(modifier = Modifier.height(15.dp))
 
             Section("Recommandation")
-            MusicRow(filtered, navController)
-
-            Spacer(modifier = Modifier.height(25.dp))
-
-
-            Section("Genres")
-
-
-            GenreRow(genres, navController)
-
-            Spacer(modifier = Modifier.height(20.dp))
-            // try to show fetched recommendations from the ViewModel, fallback to search results
-            val displayedRecommendations: List<MusicTrack> = if (homeViewModel.recommendationList.isNotEmpty()) homeViewModel.recommendationList else searchResults
+            val displayedRecommendations: List<MusicTrack> = homeViewModel.recommendationList.ifEmpty { searchResults }
             MusicRow(displayedRecommendations, navController)
 
             Spacer(modifier = Modifier.height(25.dp))
 
 
+            Section("Genres")
+            // load styles and render
+            LaunchedEffect(Unit) { homeViewModel.loadStyles() }
+            val styles = homeViewModel.styles.ifEmpty { genresFallbackNames }
+            GenreRow(styles, navController)
+
+            Spacer(modifier = Modifier.height(25.dp))
 
             Section("Découvrir")
             DiscoverList(homeViewModel.discoverList.toList(), navController)
@@ -168,26 +166,31 @@ fun HomeScreen(
 }
 
 @Composable
-fun GenreRow(genres: List<Genre>, navController: NavController) {
+fun GenreRow(styleNames: List<String>, navController: NavController) {
 
     LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-        items(genres) { genre ->
-            GenreCard(genre, navController)
+        items(styleNames) { name ->
+            GenreCard(name, navController)
         }
     }
 }
 @Composable
-fun GenreCard(genre: Genre, navController: NavController) {
+fun GenreCard(genreName: String, navController: NavController) {
 
+    val fallbackColors = listOf(
+        Color.Gray,
+        Color.Magenta,
+        Color(0xFF7F0000), // rouge très sombre
+        Color(0xFF4A148C), // violet très profond
+        Color(0xFF004D40), // teal très sombre
+        Color(0xFFE65100), // orange brûlé sombre
+        Color(0xFFF57F17), // jaune ambré foncé
+        Color(0xFF1B5E20), // vert très sombre
+        Color(0xFF880E4F), // rose/bordeaux profond
+        Color(0xFF1A237E)  // bleu nuit
+    )
 
-    val color = when (genre.name.lowercase()) {
-        "pop" -> Color(0xFF1B5E20)
-        "rap" -> Color(0xFFF57F17)
-        "afro" -> Color(0xFF0D47A1)
-        "jazz" -> Color(0xFFB71C1C)
-        "rock" -> Color(0xFF4A148C)
-        else -> Color.Gray
-    }
+    val color = fallbackColors[Random.nextInt(fallbackColors.size)]
 
     Box(
         modifier = Modifier
@@ -195,15 +198,15 @@ fun GenreCard(genre: Genre, navController: NavController) {
             .clip(RoundedCornerShape(18.dp))
             .background(color)
             .clickable {
-                navController.navigate("genre/${genre.name}")
+                navController.navigate("genre/${genreName}")
             },
         contentAlignment = Alignment.Center
     ) {
 
         Text(
-            text = genre.name,
+            text = genreName,
             color = Color.White,
-            style = MaterialTheme.typography.titleLarge
+            style = MaterialTheme.typography.titleMedium
         )
 
     }
@@ -298,7 +301,6 @@ fun MusicCard(music: MusicTrack, parentList: List<MusicTrack>, navController: Na
 
         Row(verticalAlignment = Alignment.CenterVertically) {
 
-            val style = TestDataProvider.styles.find { it.name == music.styleName }
             val fallbackColors = listOf(
                 Color.Gray,
                 Color.Magenta,
@@ -312,7 +314,7 @@ fun MusicCard(music: MusicTrack, parentList: List<MusicTrack>, navController: Na
                 Color(0xFF5C6BC0)  
             )
 
-            val styleColor = style?.color ?: fallbackColors[Random.nextInt(fallbackColors.size)]
+            val styleColor = fallbackColors[Random.nextInt(fallbackColors.size)]
             val displayName = music.username ?: (music.username ?: "AI")
 
             Box(modifier = Modifier

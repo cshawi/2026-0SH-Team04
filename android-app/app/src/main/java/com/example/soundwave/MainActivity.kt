@@ -47,13 +47,12 @@ class MainActivity : ComponentActivity() {
         }
 
         splash.setOnExitAnimationListener { splashScreenView ->
-            splashScreenView.remove()
             splashScreenView.view.animate()
                 .alpha(0f)
                 .setDuration(300)
-                .withEndAction {
-                    splashScreenView.remove()
-                }
+//                .withEndAction {
+//                    splashScreenView.remove()
+//                }
                 .start()
         }
 
@@ -61,7 +60,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             SoundWaveTheme {
-                Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+                //Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
 
                     val context = LocalContext.current
                     val state = mainVM.screenState.value
@@ -73,10 +72,6 @@ class MainActivity : ComponentActivity() {
 
                     AnimatedContent(
                         targetState = state,
-//                        transitionSpec = {
-//                            fadeIn(animationSpec = tween(300)) togetherWith
-//                                    fadeOut(animationSpec = tween(300))
-//                        },
                         transitionSpec = {
                             slideInHorizontally(
                                 initialOffsetX = { it / 2 },
@@ -108,7 +103,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
-                }
+              //  }
             }
         }
     }

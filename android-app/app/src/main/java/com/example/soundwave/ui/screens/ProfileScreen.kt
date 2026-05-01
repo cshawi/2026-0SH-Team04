@@ -378,6 +378,11 @@ fun StatsSection(userId: String?) {
 
     val likedCount = if(userId != null) vm.likedCountForUser() else 0
     val playlistsCount = if(userId != null) vm.playlistsForUser().count() else 0
+    // load generated tracks for this user and expose count
+    LaunchedEffect(userId) {
+        if (userId != null) vm.loadGenerated()
+    }
+    val generatedCount = if (userId != null) vm.generatedList.count() else 0
 
     Row(
         modifier = Modifier
@@ -387,6 +392,7 @@ fun StatsSection(userId: String?) {
     ) {
         StatCard(playlistsCount, "Playlists", Icons.AutoMirrored.Filled.PlaylistPlay)
         StatCard(likedCount, "Favoris", Icons.Default.Favorite)
+        StatCard(generatedCount, "Créations", Icons.Default.MusicNote)
     }
 }
 

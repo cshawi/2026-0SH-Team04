@@ -30,7 +30,27 @@ class HomeViewModel : BaseViewModel() {
     // discover list fetched from server without filter and randomized
     val discoverList: SnapshotStateList<MusicTrack> = mutableStateListOf()
 
+    // list of tracks fetched for a specific style (from server)
+    val tracksByStyle: SnapshotStateList<MusicTrack> = mutableStateListOf()
+
     private val trackRepository = TrackRepository()
+
+    // Styles / genres fetched from server
+    val styles: kotlin.collections.MutableList<String> = mutableListOf()
+
+    fun loadStyles(limit: Int = 50) {
+        viewModelScope.launch {
+            try {
+                val resp = trackRepository.getStyles().getOrNull()
+                if (resp != null) {
+                    styles.clear()
+                    styles.addAll(resp)
+                }
+            } catch (e: Exception) {
+                Log.d("HomeViewModel", "loadStyles failed: ${e.message}")
+            }
+        }
+    }
 
     // simple throttling / dedupe for recommendation fetches
     private var lastFetchAt: Long = 0L
@@ -87,6 +107,24 @@ class HomeViewModel : BaseViewModel() {
                 }
             } catch (e: Exception) {
                 Log.d("HomeViewModel", "fetchDiscover failed: ${e.message}")
+            }
+        }
+    }
+
+    // Fetch tracks from server filtered by style name
+    fun getMusicByStyle(style: String, limit: Int = 15) {
+        viewModelScope.launch {
+            try {
+                val resp = trackRepository.getTracksByStyle(style, limit).getOrNull()
+                if (resp != null) {
+                    val mapped = resp.mapNotNull { dto ->
+                        try { MusicTrack.fromDto(dto) } catch (e: Exception) { null }
+                    }
+                    tracksByStyle.clear()
+                    tracksByStyle.addAll(mapped)
+                }
+            } catch (e: Exception) {
+                Log.d("HomeViewModel", "getMusicByStyle failed: ${e.message}")
             }
         }
     }
@@ -148,17 +186,6 @@ class HomeViewModel : BaseViewModel() {
 
     fun launchRecommendation(limit: Int = 15) {
         refreshRecommendations(limit)
-    }
-
-
-
-    // filtre musique par genre
-    fun getMusicByGenre(genre: String): List<MusicTrack> {
-        val normalized = genre.trim().lowercase()
-
-        return musicList.filter {
-            it.styleName?.trim()?.lowercase() == normalized
-        }
     }
 
 }

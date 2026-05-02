@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.ChevronRight
@@ -66,8 +65,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import coil.compose.AsyncImage
-import com.example.soundwave.data.TestDataProvider
-import com.example.soundwave.data.TestDataProvider.PlaylistView
+import com.example.soundwave.models.PlaylistView
 import com.example.soundwave.data.local.DownloadEntity
 import com.example.soundwave.data.local.DownloadStore
 import com.example.soundwave.ui.LocalActivity
@@ -76,6 +74,9 @@ import com.example.soundwave.util.TimeUtils
 import com.example.soundwave.viewModels.AlbumItem
 import com.example.soundwave.viewModels.LibraryViewModel
 import com.example.soundwave.viewModels.PlayerViewModel
+import com.example.soundwave.viewModels.CreateViewModel
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import com.example.soundwave.viewModels.PlaylistItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -92,7 +93,7 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
     val likedMusicsUser = vm.likedMusicsUser()
     val playerViewModel: PlayerViewModel = viewModel(LocalActivity.current)
 
-    val expanded = remember { mutableStateMapOf<Int, Boolean>() }
+    val expanded = remember { mutableStateMapOf<String, Boolean>() }
 
     var showLiked by remember { mutableStateOf(false) }
 
@@ -108,6 +109,8 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
+
+            LaunchedEffect(Unit) { vm.loadPlaylists() }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -216,7 +219,7 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                         rowItems.forEach { p ->
                             val view = playlistViews.firstOrNull { it.title == p.title }
                             if (view != null) {
-                                PlaylistCard(view = view, modifier = Modifier.weight(1f)) {
+                                PlaylistCard(view = view, modifier = Modifier.weight(1f), onClick = {
                                     val current = expanded[view.id] ?: false
                                     if (current) {
                                         expanded.remove(view.id)
@@ -225,7 +228,7 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                                         expanded[view.id] = true
                                         showLiked = false
                                     }
-                                }
+                                })
                             } else {
                                 PlaylistCard(item = p, modifier = Modifier.weight(1f))
                             }
@@ -239,39 +242,37 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                     rowItems.forEach { p ->
                         val view = playlistViews.firstOrNull { it.title == p.title }
                         if (view != null && (expanded[view.id] == true)) {
+                            val playlistMusicList = vm.getPlaylistTracksById(view.id)
                             Column(modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 8.dp)) {
-                                view.trackIds.forEach { tid ->
-                                    val track = TestDataProvider.musics.firstOrNull { it.id == tid }
-                                    if (track != null) {
-                                        val context = LocalContext.current
-                                        Row(modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                                            AsyncImage(
-                                                model = track.coverUrl,
-                                                contentDescription = track.title,
-                                                modifier = Modifier
-                                                    .size(56.dp)
-                                                    .clip(RoundedCornerShape(8.dp)),
-                                                contentScale = ContentScale.Crop
-                                            )
+                                playlistMusicList.forEach { track ->
+                                    val context = LocalContext.current
+                                    Row(modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        AsyncImage(
+                                            model = track.coverUrl,
+                                            contentDescription = track.title,
+                                            modifier = Modifier
+                                                .size(56.dp)
+                                                .clip(RoundedCornerShape(8.dp)),
+                                            contentScale = ContentScale.Crop
+                                        )
 
-                                            Spacer(modifier = Modifier.width(12.dp))
+                                        Spacer(modifier = Modifier.width(12.dp))
 
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(text = track.title, color = Color.White)
-                                                Text(text = TimeUtils.formatSecondsToMMSS(track.duration), color = Color(0xFFB0B0C2), fontSize = 12.sp)
-                                            }
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(text = track.title, color = Color.White)
+                                            Text(text = TimeUtils.formatSecondsToMMSS(track.duration), color = Color(0xFFB0B0C2), fontSize = 12.sp)
+                                        }
 
-                                            IconButton(onClick = {
-                                                // build playlist's music list in order and set it on the player
-                                                val playlistMusicList = view.trackIds.mapNotNull { id -> TestDataProvider.musics.firstOrNull { it.id == id } }
-                                                AudioPlayerController.play(context, track, playlistMusicList, playerViewModel)
-                                            }) {
-                                                Icon(imageVector = Icons.Default.PlayArrow, contentDescription = "Play", tint = Color.White)
-                                            }
+                                        IconButton(onClick = {
+                                            // play this playlist
+                                            AudioPlayerController.play(context, track, playlistMusicList, playerViewModel)
+                                        }) {
+                                            Icon(imageVector = Icons.Default.PlayArrow, contentDescription = "Play", tint = Color.White)
+                                        }
 
                                         }
                                     }
@@ -283,7 +284,6 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Replace "Albums Récents" with generated music list
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column {
                         Text(text = "Vos créations", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
@@ -355,7 +355,10 @@ fun MusicListItem(track: com.example.soundwave.models.MusicTrack, vm: LibraryVie
                             }
 
                             val menuExpanded = remember { mutableStateOf(false) }
-                            val showPlaylistPicker = remember { mutableStateOf(false) }
+                            val showPlaylistPickerFor = remember { mutableStateOf<String?>(null) }
+                            val showCreatePlaylist = remember { mutableStateOf(false) }
+                            var newPlaylistTitle by remember { mutableStateOf("") }
+                            val createViewModel: CreateViewModel = viewModel()
                             val downloadState = remember(track.id) { mutableStateOf<DownloadEntity?>(null) }
 
                             LaunchedEffect(track.id) {
@@ -417,7 +420,7 @@ fun MusicListItem(track: com.example.soundwave.models.MusicTrack, vm: LibraryVie
                                     text = { Text("Ajouter à une playlist") },
                                     onClick = {
                                         menuExpanded.value = false
-                                        showPlaylistPicker.value = true
+                                        showPlaylistPickerFor.value = track.id
                                     },
                                     leadingIcon = {
                                         Icon(
@@ -516,34 +519,79 @@ fun MusicListItem(track: com.example.soundwave.models.MusicTrack, vm: LibraryVie
                                 )
                             }
 
-                            if (showPlaylistPicker.value) {
+                            if (showPlaylistPickerFor.value != null) {
+                                val tid = showPlaylistPickerFor.value!!
                                 AlertDialog(
-                                    onDismissRequest = { showPlaylistPicker.value = false },
+                                    onDismissRequest = { showPlaylistPickerFor.value = null },
                                     title = { Text("Ajouter à la playlist") },
                                     text = {
                                         Column {
-                                            vm.playlistsForUser().forEach { p ->
+                                            vm.playlistViewsForUser().forEach { p ->
                                                 Row(modifier = Modifier
                                                     .fillMaxWidth()
                                                     .clickable {
+                                                        // add to local collection and to server
                                                         vm.addMusic(track)
-                                                        vm.addTrackToPlaylist(vm.playlistsForUser().indexOf(p)+1, track.id)
-                                                        showPlaylistPicker.value = false
-                                                        Toast.makeText(context, "Ajouté à ${p.title}", Toast.LENGTH_SHORT).show()
+                                                        vm.addTrackToPlaylistServer(p.id, track.id) { success ->
+                                                            if (success) Toast.makeText(context, "Ajouté à ${p.title}", Toast.LENGTH_SHORT).show()
+                                                            else Toast.makeText(context, "Erreur lors de l'ajout", Toast.LENGTH_SHORT).show()
+                                                        }
+                                                        showPlaylistPickerFor.value = null
                                                     }
-                                                    .padding(8.dp)) {
-                                                    Text(p.title)
+                                                    .padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                    Text(text = p.title, modifier = Modifier.weight(1f))
+                                                    val count = vm.getPlaylistTrackCount(p.id)
+                                                    Text(text = "$count tracks", color = Color.Gray)
                                                 }
                                             }
-                                            if (vm.playlistsForUser().isEmpty()) {
-                                                Text("Aucune playlist trouvée", color = Color.Gray)
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                                Button(onClick = { showCreatePlaylist.value = true }) {
+                                                    Text("Créer nouvelle playlist")
+                                                }
                                             }
                                         }
                                     },
-                                    confirmButton = {
-                                        androidx.compose.material3.TextButton(onClick = { showPlaylistPicker.value = false }) {
-                                            Text("Fermer")
+                                    confirmButton = {},
+                                    dismissButton = {
+                                        Button(onClick = { showPlaylistPickerFor.value = null }) { Text("Fermer") }
+                                    }
+                                )
+                            }
+
+                            if (showCreatePlaylist.value) {
+                                AlertDialog(
+                                    onDismissRequest = { showCreatePlaylist.value = false },
+                                    title = { Text("Créer une playlist") },
+                                    text = {
+                                        Column {
+                                            OutlinedTextField(value = newPlaylistTitle, onValueChange = { newPlaylistTitle = it }, label = { Text("Nom de la playlist") })
                                         }
+                                    },
+                                    confirmButton = {
+                                        Button(onClick = {
+                                            val tid = showPlaylistPickerFor.value
+                                            if (!newPlaylistTitle.isBlank()) {
+                                                coroutineScope.launch {
+                                                    val newId = createViewModel.createPlaylistOnServer(newPlaylistTitle)
+                                                    if (newId != null) {
+                                                        if (tid != null) {
+                                                            vm.addMusic(track)
+                                                            vm.addTrackToPlaylistServer(newId, tid) {}
+                                                        }
+                                                        Toast.makeText(context, "Playlist créée", Toast.LENGTH_SHORT).show()
+                                                    } else {
+                                                        Toast.makeText(context, "Impossible de créer la playlist", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                    newPlaylistTitle = ""
+                                                    showCreatePlaylist.value = false
+                                                    showPlaylistPickerFor.value = null
+                                                }
+                                            }
+                                        }) { Text("Créer") }
+                                    },
+                                    dismissButton = {
+                                        Button(onClick = { showCreatePlaylist.value = false }) { Text("Annuler") }
                                     }
                                 )
                             }
@@ -575,7 +623,7 @@ fun PlaylistCard(item: PlaylistItem, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun PlaylistCard(view: PlaylistView, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
+fun PlaylistCard(view: PlaylistView, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, vm: LibraryViewModel = viewModel()) {
     val cardModifier = if (onClick != null) modifier.clickable { onClick() } else modifier
     Card(shape = RoundedCornerShape(12.dp), modifier = cardModifier) {
         Box(modifier = Modifier
@@ -595,18 +643,23 @@ fun PlaylistCard(view: PlaylistView, modifier: Modifier = Modifier, onClick: (()
                     .background(brush = Brush.linearGradient(listOf(Color(0xFF5B8CFF), Color(0xFF9B59FF)))))
             }
 
-            val owner = TestDataProvider.users.firstOrNull { it.id == view.ownerId }
+            // derive owner info from ViewModel user or fallback
+            val ownerUser = vm.getUser()
+            val ownerName = ownerUser?.name ?: "AI"
+            val ownerAvatar = ownerUser?.avatarUrl
+
             Column(modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(12.dp)) {
                 Text(view.title, color = Color.White, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(text = "${view.trackIds.size} tracks • ${owner?.name ?: "Unknown"}", color = Color(0xCCFFFFFF), fontSize = 12.sp)
+                val count = vm.getPlaylistTrackCount(view.id)
+                Text(text = "$count tracks • $ownerName", color = Color(0xCCFFFFFF), fontSize = 12.sp)
             }
 
-            if (owner?.avatarUrl != null) {
+            if (!ownerAvatar.isNullOrEmpty()) {
                 AsyncImage(
-                    model = owner.avatarUrl,
-                    contentDescription = owner.name,
+                    model = ownerAvatar,
+                    contentDescription = ownerName,
                     modifier = Modifier
                         .size(36.dp)
                         .align(Alignment.TopStart)

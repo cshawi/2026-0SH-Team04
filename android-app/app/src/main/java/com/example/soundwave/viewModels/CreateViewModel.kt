@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import com.example.soundwave.data.remote.dto.track.CreateTrackRequestDto
 import com.example.soundwave.data.repository.TrackRepository
+import com.example.soundwave.data.repository.PlaylistRepository
 import com.example.soundwave.data.repository.JobRepository
 import com.example.soundwave.data.repository.MusicRepository
 import com.example.soundwave.models.MusicGenerationResult
@@ -53,7 +54,27 @@ class CreateViewModel: BaseViewModel() {
     var generationTaskId by mutableStateOf<String?>(null)
 
     private val trackRepository = TrackRepository()
+    private val playlistRepository = PlaylistRepository()
     private val jobRepository = JobRepository()
+
+    // Server-backed playlist helpers
+    suspend fun createPlaylistOnServer(name: String): String? {
+        return try {
+            val resp = playlistRepository.createPlaylist(name).getOrNull()
+            resp?.id
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    suspend fun addTrackToPlaylistOnServer(playlistId: String, trackId: String): Boolean {
+        return try {
+            val resp = playlistRepository.addTrackToPlaylist(playlistId, trackId).getOrNull()
+            resp != null
+        } catch (e: Exception) {
+            false
+        }
+    }
 
     fun onImageSelected(uri: Uri?) {
         imageUri = uri

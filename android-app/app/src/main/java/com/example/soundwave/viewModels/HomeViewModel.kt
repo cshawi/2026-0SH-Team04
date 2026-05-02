@@ -30,6 +30,9 @@ class HomeViewModel : BaseViewModel() {
     // discover list fetched from server without filter and randomized
     val discoverList: SnapshotStateList<MusicTrack> = mutableStateListOf()
 
+    // list of tracks fetched for a specific style (from server)
+    val tracksByStyle: SnapshotStateList<MusicTrack> = mutableStateListOf()
+
     private val trackRepository = TrackRepository()
 
     // simple throttling / dedupe for recommendation fetches
@@ -90,6 +93,25 @@ class HomeViewModel : BaseViewModel() {
             }
         }
     }
+
+    // Fetch tracks from server filtered by style name
+    fun getMusicByStyle(style: String, limit: Int = 15) {
+//        viewModelScope.launch {
+//            try {
+//                val resp = trackRepository.getTracksByStyle(style, limit).getOrNull()
+//                if (resp != null) {
+//                    val mapped = resp.mapNotNull { dto ->
+//                        try { MusicTrack.fromDto(dto) } catch (e: Exception) { null }
+//                    }
+//                    tracksByStyle.clear()
+//                    tracksByStyle.addAll(mapped)
+//                }
+//            } catch (e: Exception) {
+//                Log.d("HomeViewModel", "getMusicByStyle failed: ${e.message}")
+//            }
+//        }
+    }
+
 
     init {
         // Collect external triggers to refresh recommendations (e.g. emitted by the player)

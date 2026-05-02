@@ -22,4 +22,8 @@ class PlaylistRepository {
     suspend fun deletePlaylist(id: String): Result<PlaylistDto> = runCatching {
         api.deletePlaylist(id)
     }
+
+    suspend fun addTrackToPlaylist(playlistId: String, trackId: String): Result<PlaylistDto> = runCatching {
+        api.addTrackToPlaylist(playlistId, com.example.soundwave.data.remote.dto.playlist.AddTrackRequestDto(trackId))
+    }
 }

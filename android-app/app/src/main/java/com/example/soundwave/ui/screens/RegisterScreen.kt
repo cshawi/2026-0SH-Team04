@@ -2,6 +2,7 @@ package com.example.soundwave.ui.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.input.InputTransformation.Companion.keyboardOptions
@@ -18,6 +19,7 @@ import androidx.navigation.NavController
 import com.example.soundwave.viewModels.ProfileViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 
 @Composable
@@ -46,6 +48,8 @@ fun RegisterScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .imePadding()
                 .padding(24.dp),
             verticalArrangement = Arrangement.Center
         ) {

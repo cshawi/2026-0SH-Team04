@@ -109,7 +109,7 @@ class CreateViewModel: BaseViewModel() {
             val startResult = trackRepository.addTrack(createReq)
             val resp = startResult.getOrElse {
                 generationError = when {
-                    it.message?.contains("401") == true -> "Tu n'es pas connecté. Veuillez vous reconnecter."
+                    it.message?.contains("401") == true -> "Veuillez vous connecter."
                     it.message?.contains("403") == true -> "Accès refusé. Tu n'as pas les droits nécessaires."
                     it.message?.contains("429") == true -> "Trop de requêtes. Attends quelques secondes et réessaie."
                     it.message?.contains("500") == true -> "Erreur serveur. Réessaie plus tard."
@@ -117,9 +117,6 @@ class CreateViewModel: BaseViewModel() {
                             it.message?.contains("Unable to resolve") == true -> "Pas de connexion internet. Vérifie ta connexion."
                     else -> "Une erreur est survenue. Réessaie plus tard."
                 }
-                isGenerating = false
-                return@launch
-                generationError = it.message ?: "Erreur inconnue"
                 isGenerating = false
                 return@launch
             }

@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.soundwave.events.AppEvents
 
 class MainViewModel : ViewModel() {
 
@@ -68,6 +69,7 @@ class MainViewModel : ViewModel() {
 
                         withContext(Dispatchers.Main) {
                             UserSession.login(mappedUser)
+                            AppEvents.tryEmitLibraryLoad()
                         }
                     }
                 }

@@ -1,6 +1,7 @@
 package com.example.soundwave.ui.screens
 
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.ChevronRight
@@ -88,8 +90,8 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
     val albums by vm.albums
     val generatedList = vm.generatedList
 
-    val playlists = vm.playlistsForUser()
-    val playlistViews = vm.playlistViewsForUser()
+    val playlists by vm.playlistItemsState
+    val playlistViews by vm.playlistViewsState
     val likedMusicsUser = vm.likedMusicsUser()
     val playerViewModel: PlayerViewModel = viewModel(LocalActivity.current)
 
@@ -110,7 +112,9 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                 .verticalScroll(rememberScrollState())
         ) {
 
-            LaunchedEffect(Unit) { vm.loadPlaylists() }
+            LaunchedEffect(Unit) { vm.loadPlaylists()
+                Log.d("LScreen", playlists.toString())
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -274,7 +278,6 @@ fun LibraryScreen(navController: NavController, vm: LibraryViewModel = viewModel
                                             Icon(imageVector = Icons.Default.PlayArrow, contentDescription = "Play", tint = Color.White)
                                         }
 
-                                        }
                                     }
                                 }
                             }

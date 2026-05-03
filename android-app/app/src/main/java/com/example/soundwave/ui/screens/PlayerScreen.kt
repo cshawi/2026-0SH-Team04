@@ -36,9 +36,6 @@ fun PlayerScreen(
     val vm: PlayerViewModel = playerViewModel ?: viewModel(activity)
     val musicList = vm.musicList
 
-    // log the current musicList for debugging when PlayerScreen composes
-    Log.d("PlayerScreen", "musicList=$musicList")
-
     val music = vm.currentTrack
 
     val isPlaying = AudioPlayerController.isPlaying

@@ -22,4 +22,11 @@ object AppEvents {
     fun tryEmitRecommendationResults(list: List<MusicTrack>) {
         _recommendationResults.tryEmit(list)
     }
+
+    private val _libraryLoadTrigger = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+    val libraryLoadTrigger = _libraryLoadTrigger.asSharedFlow()
+
+    fun tryEmitLibraryLoad() {
+        _libraryLoadTrigger.tryEmit(Unit)
+    }
 }

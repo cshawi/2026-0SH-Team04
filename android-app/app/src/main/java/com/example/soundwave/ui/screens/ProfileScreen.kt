@@ -380,7 +380,10 @@ fun StatsSection(userId: String?) {
     val playlistsCount = if(userId != null) vm.playlistsForUser().count() else 0
     // load generated tracks for this user and expose count
     LaunchedEffect(userId) {
-        if (userId != null) vm.loadGenerated()
+        if (userId != null) {
+            vm.loadGenerated()
+            vm.loadPlaylists()
+        }
     }
     val generatedCount = if (userId != null) vm.generatedList.count() else 0
 

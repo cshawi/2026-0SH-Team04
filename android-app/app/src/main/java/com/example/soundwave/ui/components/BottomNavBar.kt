@@ -76,7 +76,7 @@ fun BottomNavBar(navController: NavController) {
                 modifier = Modifier.offset { IntOffset(0, 30) },
                 onClick = {
                     navController.navigate(screen.route) {
-                        popUpTo(navController.graph.startDestinationId)
+                        // Do not popUpTo startDestination: keep backstack so navigateUp() returns to previous screen
                         launchSingleTop = true
                     }
                 },

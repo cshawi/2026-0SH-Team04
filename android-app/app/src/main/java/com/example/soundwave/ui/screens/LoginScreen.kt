@@ -3,7 +3,11 @@ package com.example.soundwave.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -16,6 +20,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -23,6 +28,7 @@ import com.example.soundwave.navigation.Screen
 import com.example.soundwave.viewModels.ProfileViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 
 @Composable
 fun LoginScreen(
@@ -37,6 +43,7 @@ fun LoginScreen(
     val viewModelError = viewModel.errorMessage.value
 
     val shimmerProgress = remember { mutableFloatStateOf(0f) }
+    val keyBoardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -55,6 +62,8 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .imePadding()
                 .padding(24.dp),
             verticalArrangement = Arrangement.Center
         ) {
@@ -89,11 +98,18 @@ fun LoginScreen(
                 value = email,
                 onValueChange = {
                     email = it
-                    localError = ""
                 },
                 label = { Text("Email") },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading,
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        keyBoardController?.hide()
+                    }
+                ),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = MaterialTheme.colorScheme.onBackground,
                     unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
@@ -114,6 +130,14 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation(),
                 enabled = !isLoading,
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        keyBoardController?.hide()
+                    }
+                ),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = MaterialTheme.colorScheme.onBackground,
                     unfocusedTextColor = MaterialTheme.colorScheme.onBackground,

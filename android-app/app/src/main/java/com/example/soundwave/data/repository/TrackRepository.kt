@@ -27,4 +27,16 @@ class TrackRepository {
     suspend fun addTrack(request: CreateTrackRequestDto): Result<AddTrackResponse> = runCatching {
         api.addTrack(request)
     }
+
+    suspend fun getStyles(): Result<List<String>> = runCatching {
+        api.getStyles()
+    }
+
+    suspend fun getGenerated(): Result<List<TrackDto>> = runCatching {
+        api.getGenerated()
+    }
+
+    suspend fun getTracksByStyle(style: String, limit: Int = 15): Result<List<TrackDto>> = runCatching {
+        api.getTracksByStyle(style, limit)
+    }
 }

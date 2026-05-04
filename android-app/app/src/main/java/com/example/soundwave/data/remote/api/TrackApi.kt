@@ -22,6 +22,15 @@ interface TrackApi {
     @GET("api/tracks/recommendations")
     suspend fun getRecommendations(@Query("limit") limit: Int? = 15): List<RecommendationItem>
 
+    @GET("api/tracks/styles")
+    suspend fun getStyles(): List<String>
+
+    @GET("api/tracks/generated")
+    suspend fun getGenerated(): List<TrackDto>
+
+    @GET("api/tracks/styles/{style}")
+    suspend fun getTracksByStyle(@Path("style") style: String, @Query("limit") limit: Int? = 15): List<TrackDto>
+
     @POST("api/tracks")
     suspend fun addTrack(@Body request: CreateTrackRequestDto): AddTrackResponse
 }

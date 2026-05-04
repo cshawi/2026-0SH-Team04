@@ -1,15 +1,33 @@
 package com.example.soundwave.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import android.util.Log
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,33 +35,32 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.soundwave.ui.components.AudioPlayerController
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.soundwave.ui.LocalActivity
+import com.example.soundwave.viewModels.LibraryViewModel
 import com.example.soundwave.viewModels.PlayerViewModel
 
 @Composable
 fun PlayerScreen(
     navController: NavController,
-    playerViewModel: PlayerViewModel? = null
+    playerViewModel: PlayerViewModel
 ) {
 
     val context = LocalContext.current
-    val activity = LocalActivity.current
-    val vm: PlayerViewModel = playerViewModel ?: viewModel(activity)
-    val musicList = vm.musicList
+    val musicList = playerViewModel.musicList
 
-    // log the current musicList for debugging when PlayerScreen composes
-    Log.d("PlayerScreen", "musicList=$musicList")
-
-    val music = vm.currentTrack
+    val music = playerViewModel.currentTrack
 
     val isPlaying = AudioPlayerController.isPlaying
     val duration = AudioPlayerController.durationMs
     val position = AudioPlayerController.positionMs
+
+    val coroutineScope = rememberCoroutineScope()
+    val libraryViewModel: LibraryViewModel = viewModel()
 
     val progress =
         if (duration > 0)
@@ -53,37 +70,26 @@ fun PlayerScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFF0F0F1A),
-                        Color(0xFF151525),
-                        Color(0xFF0A0A12)
-                    )
-                )
-            )
     ) {
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(30.dp),
+                .padding(30.dp, 30.dp,30.dp,10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 20.dp),
+                    .padding(bottom = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
                 IconButton(
                     onClick = {
-                        navController.navigate("home") {
-                            popUpTo("home") { inclusive = false }
-                        }
+                        navController.navigateUp()
                     }
                 ) {
                     Icon(
@@ -92,25 +98,35 @@ fun PlayerScreen(
                         tint = Color.White
                     )
                 }
-
-                IconButton(
-                    onClick = {
-                        AudioPlayerController.stop()
-                        navController.navigate("home") {
-                            popUpTo("home") { inclusive = false }
+                
+                if(music == null){
+                    IconButton(
+                        onClick = {
+                            AudioPlayerController.stop()
+                            navController.navigateUp()
                         }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = Color.White
+                        )
                     }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = Color.White
-                    )
+                    
                 }
+                else{
 
+                    Box(
+                        modifier = Modifier
+                            .offset { IntOffset(0, -30) }
+                            .padding(5.dp, 0.dp)
+                    ) {
+                        MusicOptionsMenu(music, libraryViewModel, context, coroutineScope)
+                    }
+                }
             }
-
-            Spacer(modifier = Modifier.height(40.dp))
+        
+            Spacer(modifier = Modifier.height(25.dp))
 
             AsyncImage(
                 model = music?.coverUrl,
@@ -121,7 +137,7 @@ fun PlayerScreen(
                 contentScale = ContentScale.Crop
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
             Text(
                 text = music?.title ?: "",
@@ -137,7 +153,7 @@ fun PlayerScreen(
                 color = Color.LightGray
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(25.dp))
 
             Slider(
                 value = progress,
@@ -167,53 +183,38 @@ fun PlayerScreen(
 
             }
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(30.dp)
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
 
+                val prevEnabled = musicList.isNotEmpty() && musicList.first() != playerViewModel.currentTrack
                 IconButton(
                     onClick = {
-
-                        val previous = vm.getPreviousMusic()
+                        val previous = playerViewModel.getPreviousMusic()
 
                         previous?.let {
-
-                            vm.currentTrack = previous
-                            //navController.navigate("player/${it.id}")
-
-                            AudioPlayerController.play(context, it, vm.musicList, vm)
+                            playerViewModel.currentTrack = previous
+                            AudioPlayerController.play(context, it, playerViewModel.musicList, playerViewModel)
                         }
 
                     },
-                    enabled = musicList.isNotEmpty() && musicList.first() != vm.currentTrack
+                    enabled = prevEnabled,
+                    modifier = Modifier.padding(20.dp, 0.dp)
                 ) {
                     Icon(
-                        Icons.Default.SkipPrevious,
+                        imageVector = Icons.Default.SkipPrevious,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = Color.White.copy(alpha = if (prevEnabled) 1f else 0.4f),
                         modifier = Modifier.size(40.dp)
                     )
                 }
 
-                IconButton(
-                    onClick = {
-
-                        music?.let {
-
-                            if (AudioPlayerController.currentUrl == it.audioUrl) {
-                                AudioPlayerController.togglePlayPause()
-                            } else {
-                                AudioPlayerController.play(context, it)
-                            }
-
-                        }
-
-                    },
+                Box(
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(70.dp)
                         .background(
                             Brush.horizontalGradient(
                                 listOf(
@@ -223,39 +224,48 @@ fun PlayerScreen(
                                 )
                             ),
                             CircleShape
-                        )
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
-
-                    Icon(
-                        imageVector =
-                            if (isPlaying) Icons.Default.Pause
-                            else Icons.Default.PlayArrow,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(40.dp)
-                    )
-
+                    IconButton(
+                        onClick = {
+                            music?.let {
+                                if (AudioPlayerController.currentUrl == it.audioUrl) {
+                                    AudioPlayerController.togglePlayPause()
+                                } else {
+                                    AudioPlayerController.play(context, it)
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
                 }
 
+                val nextEnabled = musicList.isNotEmpty() && musicList.last() != playerViewModel.currentTrack
                 IconButton(
                     onClick = {
-
-                        val next = vm.getNextMusic()
+                        val next = playerViewModel.getNextMusic()
 
                         next?.let {
-                            vm.currentTrack = next
-                            //navController.navigate("player/${it.id}")
-
-                                AudioPlayerController.play(context, it, vm.musicList, vm)
+                            playerViewModel.currentTrack = next
+                            AudioPlayerController.play(context, it, playerViewModel.musicList, playerViewModel)
                         }
 
                     },
-                    enabled = musicList.isNotEmpty() && musicList.last() != vm.currentTrack
+                    enabled = nextEnabled,
+                    modifier = Modifier.padding(20.dp, 0.dp)
                 ) {
                     Icon(
-                        Icons.Default.SkipNext,
+                        imageVector = Icons.Default.SkipNext,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = Color.White.copy(alpha = if (nextEnabled) 1f else 0.4f),
                         modifier = Modifier.size(40.dp)
                     )
                 }

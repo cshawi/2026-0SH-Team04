@@ -23,6 +23,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "soundWave"
+rootProject.name = "SoundOfSoul"
 include(":app")
  

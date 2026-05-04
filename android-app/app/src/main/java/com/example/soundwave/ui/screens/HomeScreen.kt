@@ -1,36 +1,54 @@
 package com.example.soundwave.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import kotlin.random.Random
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.platform.LocalContext
-import com.example.soundwave.models.MusicTrack
-import coil.compose.AsyncImage
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.soundwave.ui.LocalActivity
-import com.example.soundwave.navigation.Screen
-import com.example.soundwave.ui.components.AudioPlayerController
-import com.example.soundwave.viewModels.HomeViewModel
-import com.example.soundwave.util.TimeUtils
-import com.example.soundwave.data.TestDataProvider
+import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.soundwave.models.MusicTrack
+import com.example.soundwave.navigation.Screen
+import com.example.soundwave.ui.LocalActivity
+import com.example.soundwave.ui.components.AudioPlayerController
+import com.example.soundwave.util.TimeUtils
+import com.example.soundwave.viewModels.HomeViewModel
 import com.example.soundwave.viewModels.PlayerViewModel
+import kotlin.random.Random
+
+val genresFallbackNames = listOf("Pop", "Rap", "Afro", "Jazz", "Rock")
 
 @Composable
 fun TopBar(navController: NavController, homeViewModel: HomeViewModel){
@@ -87,7 +105,6 @@ fun HomeScreen(
 
     val searchText = homeViewModel.searchText.value
     val searchResults = homeViewModel.searchResults
-    val filtered = homeViewModel.musicList
     // fetch recommendations and discover list once when the HomeScreen composes
     LaunchedEffect(Unit) {
         homeViewModel.launchRecommendation()
@@ -96,7 +113,7 @@ fun HomeScreen(
         if (searchText.isNotBlank()) homeViewModel.searchTracks()
     }
 
-    // re-run search when the search text changes
+
     LaunchedEffect(searchText) {
         homeViewModel.searchTracks()
     }
@@ -113,21 +130,24 @@ fun HomeScreen(
                 .padding(20.dp)
         ) {
 
+   
             TopBar(navController, homeViewModel)
             Header(homeViewModel)
 
             Spacer(modifier = Modifier.height(15.dp))
 
-
-            Section("Recommandations")
-            // try to show fetched recommendations from the ViewModel, fallback to search results
-            val displayedRecommendations: List<MusicTrack> = if (homeViewModel.recommendationList.isNotEmpty()) homeViewModel.recommendationList else searchResults
+            Section("Recommandation")
+            val displayedRecommendations: List<MusicTrack> = homeViewModel.recommendationList.ifEmpty { searchResults }
             MusicRow(displayedRecommendations, navController)
 
             Spacer(modifier = Modifier.height(25.dp))
 
+
             Section("Genres")
-            MusicRow(filtered, navController)
+            // load styles and render
+            LaunchedEffect(Unit) { homeViewModel.loadStyles() }
+            val styles = homeViewModel.styles.ifEmpty { genresFallbackNames }
+            GenreRow(styles, navController)
 
             Spacer(modifier = Modifier.height(25.dp))
 
@@ -143,6 +163,53 @@ fun HomeScreen(
 
     }
 
+}
+
+@Composable
+fun GenreRow(styleNames: List<String>, navController: NavController) {
+
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        items(styleNames) { name ->
+            GenreCard(name, navController)
+        }
+    }
+}
+@Composable
+fun GenreCard(genreName: String, navController: NavController) {
+
+    val fallbackColors = listOf(
+        Color.Gray,
+        Color.Magenta,
+        Color(0xFF7F0000), // rouge très sombre
+        Color(0xFF4A148C), // violet très profond
+        Color(0xFF004D40), // teal très sombre
+        Color(0xFFE65100), // orange brûlé sombre
+        Color(0xFFF57F17), // jaune ambré foncé
+        Color(0xFF1B5E20), // vert très sombre
+        Color(0xFF880E4F), // rose/bordeaux profond
+        Color(0xFF1A237E)  // bleu nuit
+    )
+
+    val color = fallbackColors[Random.nextInt(fallbackColors.size)]
+
+    Box(
+        modifier = Modifier
+            .size(140.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(color)
+            .clickable {
+                navController.navigate("genre/${genreName}")
+            },
+        contentAlignment = Alignment.Center
+    ) {
+
+        Text(
+            text = genreName,
+            color = Color.White,
+            style = MaterialTheme.typography.titleMedium
+        )
+
+    }
 }
 
 @Composable
@@ -190,13 +257,13 @@ fun MusicRow(musics: List<MusicTrack>, navController: NavController){
         horizontalArrangement = Arrangement.spacedBy(14.dp)
     ){
         items(musics){
-            MusicCard(it, musics, navController, playerViewModel)
+            MusicCard(it, musics, playerViewModel)
         }
     }
 }
 
 @Composable
-fun MusicCard(music: MusicTrack, parentList: List<MusicTrack>, navController: NavController, playerViewModel: PlayerViewModel){
+fun MusicCard(music: MusicTrack, parentList: List<MusicTrack>, playerViewModel: PlayerViewModel){
 
     val context = LocalContext.current
     Column(
@@ -234,7 +301,6 @@ fun MusicCard(music: MusicTrack, parentList: List<MusicTrack>, navController: Na
 
         Row(verticalAlignment = Alignment.CenterVertically) {
 
-            val style = TestDataProvider.styles.find { it.name == music.styleName }
             val fallbackColors = listOf(
                 Color.Gray,
                 Color.Magenta,
@@ -248,7 +314,7 @@ fun MusicCard(music: MusicTrack, parentList: List<MusicTrack>, navController: Na
                 Color(0xFF5C6BC0)  
             )
 
-            val styleColor = style?.color ?: fallbackColors[Random.nextInt(fallbackColors.size)]
+            val styleColor = fallbackColors[Random.nextInt(fallbackColors.size)]
             val displayName = music.username ?: (music.username ?: "AI")
 
             Box(modifier = Modifier

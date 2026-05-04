@@ -3,9 +3,18 @@ package com.example.soundwave.ui.screens
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,35 +23,30 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.AccessTimeFilled
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.filled.AccessTimeFilled
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -53,63 +57,41 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
-import android.widget.Toast
-import android.content.Intent
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
-import androidx.compose.material3.ProgressIndicatorDefaults
-import androidx.core.content.FileProvider
-import kotlinx.coroutines.withContext
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.workDataOf
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.soundwave.ui.LocalActivity
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.soundwave.data.TestDataProvider
 import com.example.soundwave.navigation.Screen
+import com.example.soundwave.ui.LocalActivity
 import com.example.soundwave.ui.components.AudioPlayerController
 import com.example.soundwave.viewModels.CreateViewModel
+import com.example.soundwave.viewModels.LibraryViewModel
 import com.example.soundwave.viewModels.PlayerViewModel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
-import com.example.soundwave.data.local.DownloadStore
-import com.example.soundwave.data.local.DownloadEntity
-import com.example.soundwave.data.repository.UserSession
-import androidx.compose.runtime.collectAsState
 
 @Composable
-fun CreateScreen(navController: NavController, createViewModel: CreateViewModel = viewModel()) {
+fun CreateScreen(navController: NavController, createViewModel: CreateViewModel = viewModel(), libraryViewModel: LibraryViewModel = viewModel()) {
     var showAllStyles by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val playerViewModel: PlayerViewModel = viewModel(LocalActivity.current)
@@ -129,7 +111,13 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
 
     val user = createViewModel.getUser()
 
+    // ensure playlists are loaded from server for the picker
+    LaunchedEffect(Unit) {
+        libraryViewModel.loadPlaylists()
+    }
+
     val coroutineScope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
 
 
     LaunchedEffect(Unit) {
@@ -147,6 +135,7 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState)
+                .imePadding()
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -179,7 +168,7 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                 isPressed = true
                                 try {
                                     awaitRelease()
-                                    navController.navigate(Screen.Home.route)
+                                    navController.navigateUp()
                                 } finally {
                                     isPressed = false
                                 }
@@ -376,6 +365,24 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                             placeholder = { Text("Ex: Rêves Électriques") },
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                Box(
+                                    modifier = Modifier
+                                        .size(35.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary)
+                                        .clickable {
+                                            focusManager.clearFocus()
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Terminer",
+                                        tint = Color.White
+                                    )
+                                }
+                            },
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                                 unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -513,12 +520,54 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                         )
                     }
                     Spacer(modifier = Modifier.height(6.dp))
+                    val descriptionBringRequester = remember { BringIntoViewRequester() }
+                    val coroutineScope = rememberCoroutineScope()
+
                     TextField(
                         value = createViewModel.description,
-                        onValueChange = { createViewModel.description = it },
+                        onValueChange = { new ->
+                            val old = createViewModel.description
+                            createViewModel.description = new
+                            // if user added a newline at the end while keyboard is visible, bring field into view
+                            if (new.length > old.length && new.lastOrNull() == '\n') {
+                                coroutineScope.launch {
+                                    try {
+                                        // wait for IME to settle then bring into view
+                                        kotlinx.coroutines.delay(120)
+                                        descriptionBringRequester.bringIntoView()
+                                        // perform a small extra scroll to ensure caret isn't cut
+                                        try {
+                                            scrollState.animateScrollBy(120f)
+                                        } catch (_: Exception) {
+                                        }
+                                    } catch (_: Exception) {
+                                    }
+                                }
+                            }
+                        },
                         placeholder = { Text(if (createViewModel.isCustomMode && !createViewModel.isInstrumental) "Écrivez vos propres paroles, deux couplets pour un meilleur résultat." else "Décris ton idée, ton ambiance, ton style...") },
                         shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .bringIntoViewRequester(descriptionBringRequester),
+                        trailingIcon = {
+                            Box(
+                                modifier = Modifier
+                                    .size(35.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primary)
+                                    .clickable {
+                                        focusManager.clearFocus()
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Terminer",
+                                    tint = Color.White
+                                )
+                            }
+                        },
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -558,8 +607,7 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                             strokeWidth = 2.dp
                         )
                         Spacer(modifier = Modifier.width(10.dp))
-                    }
-                    else{
+                    } else {
                         Icon(
                             imageVector = Icons.Filled.GraphicEq,
                             contentDescription = null,
@@ -607,10 +655,6 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.height(10.dp))
-                    val menuExpandedFor = remember { mutableStateOf<String?>(null) }
-                    val showPlaylistPickerFor = remember { mutableStateOf<String?>(null) }
-                    val showCreatePlaylist = remember { mutableStateOf(false) }
-                    var newPlaylistTitle by remember { mutableStateOf("") }
 
                     generationResult.tracks.forEach { track ->
                         val isTrackPlaying = AudioPlayerController.isPlaying &&
@@ -630,7 +674,12 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    AudioPlayerController.play(context, track, generationResult.tracks, playerViewModel)
+                                    AudioPlayerController.play(
+                                        context,
+                                        track,
+                                        generationResult.tracks,
+                                        playerViewModel
+                                    )
                                 },
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             shape = RoundedCornerShape(16.dp)
@@ -702,266 +751,23 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
                                     }
                                     Spacer(modifier = Modifier.height(4.dp))
                                 }
+
                                 Box(
                                     modifier = Modifier
                                         .offset { IntOffset(0, -30) }
                                         .padding(5.dp, 0.dp)
                                 ) {
-                                    val downloadState = remember(track.id) { mutableStateOf<DownloadEntity?>(null) }
-
-                                    LaunchedEffect(track.id) {
-                                        val store = DownloadStore(context)
-                                        val start = System.currentTimeMillis()
-                                        val timeout = 60_000L
-                                        while (System.currentTimeMillis() - start < timeout) {
-                                            val d = store.getById(track.id)
-                                            downloadState.value = d
-                                            if (d != null && (d.status == "DONE" || d.status == "FAILED")) break
-                                            delay(700)
-                                        }
-                                        downloadState.value = store.getById(track.id)
-                                    }
-
-                                    val ds = downloadState.value
-
-                                    Box(modifier = Modifier.clickable { menuExpandedFor.value = track.id }) {
-                                        when (ds?.status) {
-                                            "DOWNLOADING" -> {
-                                                val pf = (ds.progress.coerceIn(0, 100)) / 100f
-                                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                    CircularProgressIndicator(
-                                                        progress = { pf },
-                                                        modifier = Modifier.size(28.dp),
-                                                        color = MaterialTheme.colorScheme.secondary,
-                                                        strokeWidth = 2.dp,
-                                                        trackColor = ProgressIndicatorDefaults.circularIndeterminateTrackColor,
-                                                        strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
-                                                    )
-                                                    Spacer(modifier = Modifier.height(2.dp))
-                                                    Text(
-                                                        text = "${ds.progress}%",
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        color = MaterialTheme.colorScheme.onBackground
-                                                    )
-                                                }
-                                            }
-                                            "DONE" -> {
-                                                Icon(
-                                                    imageVector = Icons.Default.Download,
-                                                    contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.secondary
-                                                )
-                                            }
-                                            else -> {
-                                                Text(
-                                                    text = "...",
-                                                    style = MaterialTheme.typography.titleLarge,
-                                                    color = MaterialTheme.colorScheme.onBackground,
-                                                    modifier = Modifier.clickable {
-                                                        menuExpandedFor.value = track.id
-                                                    },
-                                                    maxLines = 1,
-                                                    softWrap = false
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    DropdownMenu(
-                                        expanded = menuExpandedFor.value == track.id,
-                                        onDismissRequest = { menuExpandedFor.value = null }
-                                    ) {
-                                        DropdownMenuItem(
-                                            text = { Text("Ajouter à une playlist") },
-                                            onClick = {
-                                                menuExpandedFor.value = null
-                                                showPlaylistPickerFor.value = track.id
-                                            },
-                                            leadingIcon = {
-                                                Icon(
-                                                    imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
-                                                    contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.primary
-                                                )
-                                            }
-                                        )
-                                        DropdownMenuItem(
-                                            text = { Text("Ajouter aux favoris") },
-                                            onClick = {
-                                                menuExpandedFor.value = null
-                                                try {
-                                                    createViewModel.addMusic(track)
-                                                    if (user != null) createViewModel.addToLiked(track.id)
-                                                } catch (_: Exception) {}
-                                                Toast.makeText(
-                                                    context,
-                                                    "Ajouté aux favoris",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            },
-                                            leadingIcon = {
-                                                Icon(
-                                                    imageVector = Icons.Default.Favorite,
-                                                    contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.error
-                                                )
-                                            }
-                                        )
-                                        DropdownMenuItem(
-                                            text = { Text("Télécharger") },
-                                            onClick = {
-                                                menuExpandedFor.value = null
-
-                                                coroutineScope.launch {
-                                                    try {
-                                                        val store = DownloadStore(context)
-                                                        store.upsert(DownloadEntity(trackId = track.id, title = track.title, localPath = null, status = "DOWNLOADING", progress = 0))
-                                                    } catch (_: Exception) {
-                                                    }
-                                                }
-
-                                                val data = workDataOf(
-                                                    "trackId" to track.id,
-                                                    "audioUrl" to track.audioUrl,
-                                                    "title" to track.title
-                                                )
-                                                val request = OneTimeWorkRequestBuilder<com.example.soundwave.data.worker.DownloadWorker>()
-                                                    .setInputData(data)
-                                                    .build()
-                                                WorkManager.getInstance(context).enqueue(request)
-                                                Toast.makeText(context, "Téléchargement lancé", Toast.LENGTH_SHORT).show()
-                                            },
-                                            leadingIcon = {
-                                                Icon(
-                                                    imageVector = Icons.Default.Download,
-                                                    contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.secondary
-                                                )
-                                            }
-                                        )
-                                        DropdownMenuItem(
-                                            text = { Text("Partager") },
-                                            onClick = {
-                                                menuExpandedFor.value = null
-                                                coroutineScope.launch {
-                                                    try {
-                                                        val store = DownloadStore(context)
-                                                        val download = withContext(kotlinx.coroutines.Dispatchers.IO) { store.getById(track.id) }
-                                                        if (download?.localPath != null) {
-                                                            val file = java.io.File(download.localPath)
-                                                            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-                                                            val share = Intent(Intent.ACTION_SEND).apply {
-                                                                type = "audio/*"
-                                                                putExtra(Intent.EXTRA_STREAM, uri)
-                                                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                                            }
-                                                            context.startActivity(Intent.createChooser(share, "Partager la piste"))
-                                                        } else {
-                                                            val shareText = "${track.title}\n${track.audioUrl}"
-                                                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                                                type = "text/plain"
-                                                                putExtra(Intent.EXTRA_SUBJECT, track.title)
-                                                                putExtra(Intent.EXTRA_TEXT, shareText)
-                                                            }
-                                                            context.startActivity(Intent.createChooser(shareIntent, "Partager via"))
-                                                        }
-                                                    } catch (e: Exception) {
-                                                        Toast.makeText(context, "Impossible d'ouvrir le partage", Toast.LENGTH_SHORT).show()
-                                                    }
-                                                }
-                                            },
-                                            leadingIcon = {
-                                                Icon(
-                                                    imageVector = Icons.Default.Share,
-                                                    contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.onBackground
-                                                )
-                                            }
-                                        )
-                                    }
+                                    MusicOptionsMenu(track, libraryViewModel, context, coroutineScope)
+                                    Spacer(modifier = Modifier.height(10.dp))
                                 }
-
                             }
                         }
-
-                    if (showPlaylistPickerFor.value != null) {
-                        val tid = showPlaylistPickerFor.value!!
-                        AlertDialog(
-                            onDismissRequest = { showPlaylistPickerFor.value = null },
-                            title = { Text("Ajouter à la playlist") },
-                            text = {
-                                Column {
-                                    TestDataProvider.playlists.forEach { p ->
-                                        Row(modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-
-                                                createViewModel.addMusic(generationResult.tracks.first { it.id == tid })
-                                                createViewModel.addTrackToPlaylist(p.id, tid)
-                                                Toast.makeText(context, "Ajouté à ${p.title}", Toast.LENGTH_SHORT).show()
-                                                showPlaylistPickerFor.value = null
-                                            }
-                                            .padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                            Text(text = p.title, modifier = Modifier.weight(1f))
-                                            Text(text = "${p.trackIds.size} tracks", color = Color.Gray)
-                                        }
-                                    }
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                        Button(onClick = {
-                                            showCreatePlaylist.value = true
-                                        }) {
-                                            Text("Créer nouvelle playlist")
-                                        }
-                                    }
-                                }
-                            },
-                            confirmButton = {},
-                            dismissButton = {
-                                Button(onClick = { showPlaylistPickerFor.value = null }) { Text("Fermer") }
-                            }
-                        )
-                    }
-
-                    if (showCreatePlaylist.value) {
-                        AlertDialog(
-                            onDismissRequest = { showCreatePlaylist.value = false },
-                            title = { Text("Créer une playlist") },
-                            text = {
-                                Column {
-                                    OutlinedTextField(value = newPlaylistTitle, onValueChange = { newPlaylistTitle = it }, label = { Text("Nom de la playlist") })
-                                }
-                            },
-                            confirmButton = {
-                                Button(onClick = {
-                                        val tid = showPlaylistPickerFor.value
-                                        if (!newPlaylistTitle.isBlank()) {
-                                            val newId = createViewModel.createPlaylist(newPlaylistTitle)
-                                            if (tid != null) {
-                                                createViewModel.addMusic(generationResult.tracks.first { it.id == tid })
-                                                createViewModel.addTrackToPlaylist(newId, tid)
-                                            }
-                                            Toast.makeText(context, "Playlist créée", Toast.LENGTH_SHORT).show()
-                                            newPlaylistTitle = ""
-                                            showCreatePlaylist.value = false
-                                            showPlaylistPickerFor.value = null
-                                        }
-                                }) { Text("Créer") }
-                            },
-                            dismissButton = {
-                                Button(onClick = { showCreatePlaylist.value = false }) { Text("Annuler") }
-                            }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
                     }
                 }
             }
         }
     }
 }
-
 
 
 

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Solid background that matches app theme -->
+    <item android:drawable="@color/splash_background" />
+
+    <!-- Centered logo (bitmap); keep small enough to avoid heavy decode) -->
+    <item android:drawable="@drawable/logo_splash" android:gravity="center" />
+</layer-list>

@@ -58,7 +58,12 @@ class ProfileViewModel : BaseViewModel() {
             true
         } else {
             val ex = result.exceptionOrNull()
-            errorMessage.value = ex?.message ?: "Erreur lors de l'inscription"
+
+            errorMessage.value = when {
+                ex == null -> "Erreur lors de l'inscription"
+                ex is java.net.UnknownHostException -> "Pas de connexion internet. Vérifie ta connexion."
+                else -> ex.message
+            }
             false
         }
     }
@@ -89,8 +94,12 @@ class ProfileViewModel : BaseViewModel() {
             }
         } else {
             val ex = result.exceptionOrNull()
-            // errorMessage.value = ex?.message ?: "Email ou mot de passe incorrect"
-            errorMessage.value = "Email ou mot de passe incorrect"
+
+            errorMessage.value = when {
+                ex == null -> "Email ou mot de passe incorrect"
+                ex is java.net.UnknownHostException -> "Pas de connexion internet. Vérifie ta connexion."
+                else -> "Email ou mot de passe incorrect"
+            }
             false
         }
     }

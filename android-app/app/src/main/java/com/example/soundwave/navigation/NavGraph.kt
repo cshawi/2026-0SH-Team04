@@ -1,6 +1,5 @@
 package com.example.soundwave.navigation
 
-import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -13,7 +12,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.soundwave.data.repository.UserSession
 import com.example.soundwave.ui.components.AudioPlayerBar
 import com.example.soundwave.ui.components.BottomNavBar
 import com.example.soundwave.ui.screens.CreateScreen
@@ -70,7 +68,7 @@ fun NavGraph() {
                     }
 
                     composable(Screen.Library.route) {
-                        LibraryScreen(navController)
+                        LibraryScreen()
                     }
 
                     composable(Screen.Profile.route) {
@@ -90,13 +88,19 @@ fun NavGraph() {
                     }
 
                     composable("Player") {
-                        //backStackEntry ->
-
-                        //val musicId = backStackEntry.arguments?.getString("musicId") ?: ""
-
                         PlayerScreen(
                             navController = navController,
                             playerViewModel
+                        )
+                    }
+
+                    composable("genre/{name}") { backStackEntry ->
+
+                        val name = backStackEntry.arguments?.getString("name") ?: ""
+
+                        GenreScreen(
+                            genreName = name,
+                            navController = navController
                         )
                     }
                 }

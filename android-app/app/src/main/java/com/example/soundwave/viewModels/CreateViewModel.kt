@@ -4,14 +4,12 @@ import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.compose.ui.graphics.Color
-import androidx.navigation.NavController
+import androidx.lifecycle.viewModelScope
 import com.example.soundwave.data.remote.dto.track.CreateTrackRequestDto
-import com.example.soundwave.data.repository.TrackRepository
 import com.example.soundwave.data.repository.JobRepository
-import com.example.soundwave.data.repository.MusicRepository
+import com.example.soundwave.data.repository.PlaylistRepository
+import com.example.soundwave.data.repository.TrackRepository
 import com.example.soundwave.models.MusicGenerationResult
 import com.example.soundwave.models.MusicTrack
 import com.example.soundwave.models.StyleItem
@@ -25,7 +23,6 @@ import compose.icons.fontawesomeicons.solid.Music
 import compose.icons.fontawesomeicons.solid.RecordVinyl
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import okhttp3.Route
 
 class CreateViewModel: BaseViewModel() {
 
@@ -53,7 +50,27 @@ class CreateViewModel: BaseViewModel() {
     var generationTaskId by mutableStateOf<String?>(null)
 
     private val trackRepository = TrackRepository()
+    private val playlistRepository = PlaylistRepository()
     private val jobRepository = JobRepository()
+
+    // Server-backed playlist helpers
+    suspend fun createPlaylistOnServer(name: String): String? {
+        return try {
+            val resp = playlistRepository.createPlaylist(name).getOrNull()
+            resp?.id
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    suspend fun addTrackToPlaylistOnServer(playlistId: String, trackId: String): Boolean {
+        return try {
+            val resp = playlistRepository.addTrackToPlaylist(playlistId, trackId).getOrNull()
+            resp != null
+        } catch (e: Exception) {
+            false
+        }
+    }
 
     fun onImageSelected(uri: Uri?) {
         imageUri = uri
@@ -62,6 +79,15 @@ class CreateViewModel: BaseViewModel() {
     fun onGenerateClicked() {
 
         if (isGenerating) return
+
+        if (description.isBlank()) {
+            generationError = "Veuillez entrer une description avant de générer."
+            return
+        }
+        if (isCustomMode && title.isBlank()) {
+            generationError = "Veuillez entrer un titre pour votre musique."
+            return
+        }
 
         isGenerating = true
         generationError = null
@@ -77,10 +103,20 @@ class CreateViewModel: BaseViewModel() {
             coverUrl = null
         )
 
+
+
         viewModelScope.launch {
             val startResult = trackRepository.addTrack(createReq)
             val resp = startResult.getOrElse {
-                generationError = it.message ?: "Erreur inconnue"
+                generationError = when {
+                    it.message?.contains("401") == true -> "Veuillez vous connecter."
+                    it.message?.contains("403") == true -> "Accès refusé. Tu n'as pas les droits nécessaires."
+                    it.message?.contains("429") == true -> "Trop de requêtes. Attends quelques secondes et réessaie."
+                    it.message?.contains("500") == true -> "Erreur serveur. Réessaie plus tard."
+                    it.message?.contains("network") == true ||
+                            it.message?.contains("Unable to resolve") == true -> "Pas de connexion internet. Vérifie ta connexion."
+                    else -> "Une erreur est survenue. Réessaie plus tard."
+                }
                 isGenerating = false
                 return@launch
             }
@@ -88,13 +124,14 @@ class CreateViewModel: BaseViewModel() {
             val taskId = resp.jobId ?: resp.taskId
             generationTaskId = taskId
 
-            val maxAttempts = 22
+            val maxAttempts = 60
             val delayMs = 3000L
 
             repeat(maxAttempts) { attempt ->
                 val jobResult = jobRepository.getJobStatus(taskId ?: "")
                 val job = jobResult.getOrElse {
                     generationError = it.message ?: "Erreur inconnue"
+                    isGenerating = false
                     return@launch
                 }
 

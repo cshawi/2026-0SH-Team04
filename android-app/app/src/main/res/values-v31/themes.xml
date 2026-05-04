@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- API 31+ theme overrides so Android 12+ system splash uses our drawables -->
+    <style name="Theme.SoundWave" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- native window background shown instantly by the OS -->
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <!-- system splash icon (Android 12+) -->
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/logo_splash</item>
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+    </style>
+
+</resources>

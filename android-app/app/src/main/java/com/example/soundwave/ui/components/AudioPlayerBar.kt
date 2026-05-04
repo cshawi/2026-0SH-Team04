@@ -86,12 +86,22 @@ fun AudioPlayerBar(navController: NavController) {
                 )
 
                 Spacer(modifier = Modifier.size(8.dp))
-                IconButton(onClick = { AudioPlayerController.togglePlayPause() }) {
-                    Icon(
-                        imageVector = if (AudioPlayerController.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                // Play/Pause: put inside a circular colored background for visibility
+                Box(
+                    modifier = Modifier
+                        .size(45.dp)
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    IconButton(onClick = { AudioPlayerController.togglePlayPause() }) {
+                        Icon(
+                            imageVector = if (AudioPlayerController.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
                 IconButton(onClick = { AudioPlayerController.stop() }) {
                     Icon(

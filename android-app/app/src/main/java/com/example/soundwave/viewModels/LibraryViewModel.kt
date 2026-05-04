@@ -1,16 +1,56 @@
 package com.example.soundwave.viewModels
 
+import android.util.Log
 import androidx.compose.runtime.derivedStateOf
-import com.example.soundwave.data.TestDataProvider
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.lifecycle.viewModelScope
 import com.example.soundwave.data.TestDataProvider.likedMusic
 import com.example.soundwave.data.TestDataProvider.likedMusics
 import com.example.soundwave.data.TestDataProvider.musics
+import com.example.soundwave.data.remote.dto.playlist.PlaylistDto
+import com.example.soundwave.data.repository.TrackRepository
 import com.example.soundwave.models.MusicTrack
+import com.example.soundwave.models.PlaylistView
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
+import com.example.soundwave.events.AppEvents
 
 data class PlaylistItem(val title: String, val trackCount: Int)
 data class AlbumItem(val title: String, val subtitle: String)
 
 class LibraryViewModel : BaseViewModel() {
+
+    private val trackRepository = TrackRepository()
+    private val playlistRepository = com.example.soundwave.data.repository.PlaylistRepository()
+    val generatedList: SnapshotStateList<MusicTrack> = mutableStateListOf()
+
+    fun loadGenerated() {
+        viewModelScope.launch {
+            try {
+                val resp = trackRepository.getGenerated().getOrNull()
+                if (resp != null) {
+                    val mapped = resp.mapNotNull { dto ->
+                        try { MusicTrack.fromDto(dto) } catch (e: Exception) { null }
+                    }
+                    generatedList.clear()
+                    generatedList.addAll(mapped)
+                }
+            } catch (e: Exception) {
+                Log.d("LibraryViewModel", "loadGenerated failed: ${e.message}")
+            }
+        }
+    }
+
+    init {
+        // listen for app-level events (e.g., after login) to preload library data
+        viewModelScope.launch {
+            AppEvents.libraryLoadTrigger.collectLatest {
+                loadPlaylists()
+                loadGenerated()
+            }
+        }
+    }
 
     fun likedMusicsUser() : List<MusicTrack>{
         val user = getUser() ?: return emptyList()
@@ -21,20 +61,143 @@ class LibraryViewModel : BaseViewModel() {
         return likedMusicsUser().size
     }
 
+    // make serverPlaylists observable so Compose recomposes when it changes
+    private val serverPlaylists = mutableStateListOf<PlaylistDto>()
+
+    // derived states for UI consumption
+    val playlistItemsState = derivedStateOf {
+        serverPlaylists.map { p -> PlaylistItem(title = p.name, trackCount = p.tracks?.size ?: 0) }
+    }
+
+    val playlistViewsState = derivedStateOf {
+        serverPlaylists.map { p ->
+            val ownerId = getUser()?.id ?: "0"
+            val cover = if (!p.tracks.isNullOrEmpty()) {
+                p.tracks.firstOrNull()?.coverUrl
+            }  else null
+            val trackIdsList = when {
+                p.tracks != null -> p.tracks.map { it.id }
+                p.trackIds != null -> p.trackIds
+                else -> emptyList()
+            }
+            PlaylistView(id = p.id, title = p.name, ownerId = ownerId, trackIds = trackIdsList, coverUrl = cover)
+        }
+    }
+
     fun playlistsForUser(): List<PlaylistItem> {
         val user = getUser() ?: return emptyList()
-        return TestDataProvider.playlists.filter { it.ownerId == user.id }.map { p -> PlaylistItem(title = p.title, trackCount = p.trackIds.size) }
+        return playlistItemsState.value
     }
 
-    fun playlistViewsForUser(): List<TestDataProvider.PlaylistView> {
-        val user = getUser() ?: return emptyList()
-        return TestDataProvider.playlists.filter { it.ownerId == user.id }
+    fun playlistViewsForUser(): List<PlaylistView> {
+        Log.d("LVVM", playlistViewsState.value.toString())
+        return playlistViewsState.value
     }
 
-    val albums = derivedStateOf { TestDataProvider.playlists.map { p -> AlbumItem(title = p.title, subtitle = "${p.trackIds.size} tracks") } }
+    // serverPlaylists moved above as observable state
 
-    // Placeholder setters kept for API compatibility
-    fun setPlaylists(list: List<PlaylistItem>) { /* playlists are derived from TestDataProvider */ }
-    fun setAlbums(list: List<AlbumItem>) { /* albums are derived from TestDataProvider */ }
-    fun setLikedCount(n: Int) { /* likedCount is derived */ }
+    fun addTrackToPlaylistServer(playlistId: String, trackId: String, onComplete: ((Boolean) -> Unit)? = null) {
+        val repo = playlistRepository
+        viewModelScope.launch {
+            try {
+                val resp = repo.addTrackToPlaylist(playlistId, trackId).getOrNull()
+                if (resp != null) {
+                    // update local cache
+                    val idx = serverPlaylists.indexOfFirst { it.id == resp.id }
+                    if (idx >= 0) serverPlaylists[idx] = resp else serverPlaylists.add(resp)
+                    onComplete?.invoke(true)
+                } else {
+                    onComplete?.invoke(false)
+                }
+            } catch (e: Exception) {
+                onComplete?.invoke(false)
+            }
+        }
+    }
+
+
+    fun loadPlaylists(filter: String? = null) {
+        viewModelScope.launch {
+            try {
+                val resp = playlistRepository.getPlaylists(filter).getOrNull()
+                if (resp != null) {
+                    serverPlaylists.clear()
+                    serverPlaylists.addAll(resp)
+                }
+            } catch (e: Exception) {
+                // ignore and keep test data
+            }
+        }
+    }
+
+    fun createPlaylist(name: String, onComplete: ((Boolean) -> Unit)? = null) {
+        viewModelScope.launch {
+            try {
+                val resp = playlistRepository.createPlaylist(name).getOrNull()
+                if (resp != null) {
+                    serverPlaylists.add(resp)
+                    onComplete?.invoke(true)
+                } else {
+                    onComplete?.invoke(false)
+                }
+            } catch (e: Exception) {
+                onComplete?.invoke(false)
+            }
+        }
+    }
+
+    // Locally update a server playlist by id (mirror adding a track)
+    fun addTrackToPlaylistById(playlistId: String, trackId: String) {
+        val idx = serverPlaylists.indexOfFirst { it.id == playlistId }
+        if (idx >= 0) {
+            val p = serverPlaylists[idx]
+            // reconcile using tracks if available, else trackIds
+            if (p.tracks != null) {
+                val ids = p.tracks.map { it.id }
+                if (!ids.contains(trackId)) {
+                    val newTracks = p.tracks + com.example.soundwave.data.remote.dto.track.TrackDto(
+                        id = trackId,
+                        title = "",
+                        style = "",
+                        audioUrl = "",
+                        userId = null,
+                        username = null,
+                        coverUrl = "",
+                        duration = null,
+                        description = null,
+                        lyrics = null,
+                        createdAt = "",
+                        updatedAt = ""
+                    )
+                    serverPlaylists[idx] = p.copy(tracks = newTracks)
+                }
+            } else {
+                val current = p.trackIds ?: emptyList()
+                if (!current.contains(trackId)) {
+                    serverPlaylists[idx] = p.copy(trackIds = current + trackId)
+                }
+            }
+        }
+    }
+
+    val albums = derivedStateOf { serverPlaylists.map { p -> AlbumItem(title = p.name, subtitle = "${p.tracks?.size ?: 0} tracks") } }
+    fun getPlaylistTracksById(playlistId: String): List<MusicTrack> {
+        val idx = serverPlaylists.indexOfFirst { it.id == playlistId }
+        if (idx >= 0) {
+            val p = serverPlaylists[idx]
+            if (p.tracks != null) {
+                return p.tracks.mapNotNull { try { MusicTrack.fromDto(it) } catch (_: Exception) { null } }
+            }
+        }
+        return emptyList()
+    }
+
+    fun getPlaylistTrackCount(playlistId: String): Int {
+        val idx = serverPlaylists.indexOfFirst { it.id == playlistId }
+        if (idx >= 0) {
+            val p = serverPlaylists[idx]
+            return p.tracks?.size ?: 0
+        }
+        return 0
+    }
 }

@@ -1,6 +1,5 @@
 package com.example.soundwave.ui.components
 
-import android.R
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -17,6 +16,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.example.soundwave.data.repository.PlayRepository
+import androidx.core.net.toUri
 
 object AudioPlayerController {
 
@@ -47,6 +48,17 @@ object AudioPlayerController {
     private var lastMusicList: List<MusicTrack>? = null
     private var prevTrackId: String? = null
     private val emittedForTrack = mutableSetOf<String>()
+    private val listenedTracks = mutableSetOf<String>()
+    private val listenedTimePerTrack = mutableMapOf<String, Long>()
+    // Track active play sessions: map trackId -> server playId
+    private val activePlaySession = mutableMapOf<String, String>()
+    // Last progression sent to server per playId
+    private val lastSentProgressionPerPlay = mutableMapOf<String, Double>()
+    // Last position (ms) sent to server per playId — used to prevent updates after seeks backward
+    private val lastSentPositionPerPlay = mutableMapOf<String, Long>()
+
+    private const val LISTEN_THRESHOLD_MS = 15_000L
+    private val playRepository = PlayRepository()
 
     fun ensureInitialized(context: Context) {
         if (player != null) return
@@ -105,6 +117,83 @@ object AudioPlayerController {
                 // If we have a music list and the current track is the last element,
                 // emit a recommendation trigger once when we reach half of the track or near the end.
                 try {
+                    if (
+                        current != null &&
+                        exo?.isPlaying == true
+                    ) {
+
+                        val trackId = current.id
+                        listenedTimePerTrack[trackId] =
+                            (listenedTimePerTrack[trackId] ?: 0L) + 500L
+
+                        val totalListenTime = listenedTimePerTrack[trackId] ?: 0L
+
+                        if (totalListenTime >= LISTEN_THRESHOLD_MS && !listenedTracks.contains(trackId)) {
+                            // First time threshold reached for this track in this session: create a play on server
+                            scope.launch {
+                                if (durationMs > 0L) {
+                                    val actualProgression: Double = (1.0) * totalListenTime / durationMs
+                                    // call addPlay and store returned play id to allow subsequent updates
+                                    Log.d("Audio", current.id)
+                                    val res = kotlin.runCatching { playRepository.addPlay(current.id, actualProgression) }
+                                    Log.d("AudioPlayer", res.toString())
+                                    res.onSuccess { result ->
+                                        val playDto = result.getOrNull()
+                                        if (playDto != null) {
+                                            activePlaySession[trackId] = playDto.id
+                                            lastSentProgressionPerPlay[playDto.id] = actualProgression
+                                            lastSentPositionPerPlay[playDto.id] = positionMs
+                                            // mark only after successful creation so failures can be retried later
+                                            listenedTracks.add(trackId)
+                                        }
+                                    }
+                                } else {
+                                    // duration unknown: still attempt to add play with progression 0.0
+                                    val res = kotlin.runCatching { playRepository.addPlay(current.id, 0.0) }
+                                    res.onSuccess { result ->
+                                        val playDto = result.getOrNull()
+                                        if (playDto != null) {
+                                            activePlaySession[trackId] = playDto.id
+                                            lastSentProgressionPerPlay[playDto.id] = 0.0
+                                            lastSentPositionPerPlay[playDto.id] = positionMs
+                                            listenedTracks.add(trackId)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Every 5s after the first play creation, attempt to update the play with new progression
+                        val playId = activePlaySession[trackId]
+                        if (playId != null) {
+                            // Only update every ~5s increments of listened time (we increment listenedTimePerTrack by 500ms)
+                            val sentSoFar = lastSentProgressionPerPlay[playId] ?: 0.0
+                            // compute candidate progression only if duration known
+                            if (durationMs > 0L) {
+                                val candidateProgression = (1.0) * totalListenTime / durationMs
+                                // Only send update if progression strictly increased and at least 5s since lastSent
+                                val shouldUpdate = candidateProgression > sentSoFar &&
+                                    (totalListenTime - ((sentSoFar * durationMs).toLong())) >= 5_000L
+
+                                if (shouldUpdate) {
+                                    // also ensure user didn't seek backward past the last sent position
+                                    val lastPos = lastSentPositionPerPlay[playId] ?: 0L
+                                    if (positionMs >= lastPos) {
+                                        scope.launch {
+                                            kotlin.runCatching {
+                                                playRepository.updatePlay(playId, candidateProgression)
+                                            }.onSuccess { result ->
+                                                // on success, update lastSentProgression and lastSentPosition
+                                                lastSentProgressionPerPlay[playId] = candidateProgression
+                                                lastSentPositionPerPlay[playId] = positionMs
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     val list = lastMusicList
                     if (current != null && list != null && durationMs > 0L) {
                         val index = list.indexOfFirst { it.id == current.id }
@@ -129,8 +218,24 @@ object AudioPlayerController {
         }
     }
 
-    fun play(context: Context, track: MusicTrack, musicList: List<MusicTrack>? = null, playerViewModel: com.example.soundwave.viewModels.PlayerViewModel? = null) {
+    fun play(context: Context, track: MusicTrack, musicList: List<MusicTrack>? = null, playerViewModel: PlayerViewModel? = null) {
         ensureInitialized(context)
+        // reset session for previous track so returning later will create a new play after threshold
+        val previous = currentTrack
+        if (previous != null && previous.id != track.id) {
+            val prevId = previous.id
+            // clear accumulated listen time for previous
+            listenedTimePerTrack.remove(prevId)
+            // clear any active server play session for previous
+            val prevPlayId = activePlaySession.remove(prevId)
+            if (prevPlayId != null) {
+                lastSentProgressionPerPlay.remove(prevPlayId)
+                lastSentPositionPerPlay.remove(prevPlayId)
+            }
+            // allow a new play to be created next time we listen to previous track
+            listenedTracks.remove(prevId)
+        }
+
         // set metadata immediately
         currentTrack = track
         currentUrl = track.audioUrl
@@ -153,8 +258,8 @@ object AudioPlayerController {
         // check for a downloaded local file and play it if available
         scope.launch {
             val store = com.example.soundwave.data.local.DownloadStore(context)
-            val download = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { store.getById(track.id) }
-            val uriToPlay = if (download?.localPath != null) android.net.Uri.fromFile(java.io.File(download.localPath)) else android.net.Uri.parse(track.audioUrl)
+            val download = kotlinx.coroutines.withContext(Dispatchers.IO) { store.getById(track.id) }
+            val uriToPlay = if (download?.localPath != null) android.net.Uri.fromFile(java.io.File(download.localPath)) else track.audioUrl.toUri()
             // always set media item to the requested track
             player?.setMediaItem(MediaItem.fromUri(uriToPlay))
             player?.prepare()
@@ -188,6 +293,13 @@ object AudioPlayerController {
         lastMusicList = null
         prevTrackId = null
         emittedForTrack.clear()
+        // clear active play sessions for tracks when stopping playback
+        activePlaySession.clear()
+        lastSentProgressionPerPlay.clear()
+        // don't clear listenedTracks entirely here: we want new sessions after full stop+restart
+        // cancel progress job to avoid orphan coroutine
+        progressJob?.cancel()
+        progressJob = null
     }
     fun seekTo(position: Long) {
         player?.seekTo(position)

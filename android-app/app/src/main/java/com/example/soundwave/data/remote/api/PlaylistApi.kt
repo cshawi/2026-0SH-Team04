@@ -23,4 +23,7 @@ interface PlaylistApi {
 
     @DELETE("api/playlists/{id}")
     suspend fun deletePlaylist(@Path("id") id: String): PlaylistDto
+
+    @POST("api/playlists/{id}/tracks")
+    suspend fun addTrackToPlaylist(@Path("id") id: String, @Body request: com.example.soundwave.data.remote.dto.playlist.AddTrackRequestDto): PlaylistDto
 }

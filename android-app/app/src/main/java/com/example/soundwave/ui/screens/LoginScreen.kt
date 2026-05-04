@@ -98,7 +98,6 @@ fun LoginScreen(
                 value = email,
                 onValueChange = {
                     email = it
-                    localError = ""
                 },
                 label = { Text("Email") },
                 modifier = Modifier.fillMaxWidth(),

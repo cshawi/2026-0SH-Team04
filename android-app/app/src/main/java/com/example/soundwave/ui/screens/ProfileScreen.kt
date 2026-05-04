@@ -95,9 +95,7 @@ fun ProfileScreen(
             menuExpanded = menuExpanded,
             onMenuExpandedChange = { menuExpanded = it },
             onBackClick = {
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Profile.route) { inclusive = true }
-                }
+                navController.navigateUp()
             },
             onLogoutClick = {
                 menuExpanded = false

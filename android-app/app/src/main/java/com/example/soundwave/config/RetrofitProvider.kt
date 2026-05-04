@@ -16,9 +16,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitProvider {
-//    private const val BASE_URL = BuildConfig.BASE_URL
 
-    private const val BASE_URL = "https://anaerobic-backing-kilowatt.ngrok-free.dev"
+    private const val BASE_URL = "https://two026-0sh-team04-server.onrender.com"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BASIC

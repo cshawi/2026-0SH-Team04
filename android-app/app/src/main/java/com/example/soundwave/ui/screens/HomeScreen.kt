@@ -257,13 +257,13 @@ fun MusicRow(musics: List<MusicTrack>, navController: NavController){
         horizontalArrangement = Arrangement.spacedBy(14.dp)
     ){
         items(musics){
-            MusicCard(it, musics, navController, playerViewModel)
+            MusicCard(it, musics, playerViewModel)
         }
     }
 }
 
 @Composable
-fun MusicCard(music: MusicTrack, parentList: List<MusicTrack>, navController: NavController, playerViewModel: PlayerViewModel){
+fun MusicCard(music: MusicTrack, parentList: List<MusicTrack>, playerViewModel: PlayerViewModel){
 
     val context = LocalContext.current
     Column(

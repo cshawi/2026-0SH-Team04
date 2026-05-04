@@ -1,8 +1,8 @@
 package com.example.soundwave.ui.screens
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,11 +39,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,6 +67,7 @@ import androidx.work.workDataOf
 import coil.compose.AsyncImage
 import com.example.soundwave.data.local.DownloadEntity
 import com.example.soundwave.data.local.DownloadStore
+import com.example.soundwave.data.worker.DownloadWorker
 import com.example.soundwave.models.MusicTrack
 import com.example.soundwave.ui.LocalActivity
 import com.example.soundwave.ui.components.AudioPlayerController
@@ -75,9 +76,8 @@ import com.example.soundwave.viewModels.CreateViewModel
 import com.example.soundwave.viewModels.HomeViewModel
 import com.example.soundwave.viewModels.LibraryViewModel
 import com.example.soundwave.viewModels.PlayerViewModel
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @SuppressLint("LocalContextResourcesRead", "DiscouragedApi")
 @Composable
@@ -170,7 +170,7 @@ fun GenreScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(musics) { music ->
-                    PopularTrackItem(music)
+                    PopularTrackItem(music, homeViewModel)
                 }
             }
 
@@ -179,10 +179,10 @@ fun GenreScreen(
 }
 
 @Composable
-fun PopularTrackItem(music: MusicTrack) {
+fun PopularTrackItem(music: MusicTrack, homeViewModel: HomeViewModel) {
     val context = LocalContext.current
     val playerViewModel: PlayerViewModel = viewModel(LocalActivity.current)
-    val vm: LibraryViewModel = viewModel()
+    val libraryViewModel: LibraryViewModel = viewModel()
     val coroutineScope = rememberCoroutineScope()
     Row(
         modifier = Modifier
@@ -192,7 +192,7 @@ fun PopularTrackItem(music: MusicTrack) {
         verticalAlignment = Alignment.CenterVertically
     ) {
 
-        IconButton(onClick = { AudioPlayerController.play(context, music, listOf(music), playerViewModel) }) {
+        IconButton(onClick = { AudioPlayerController.play(context, music, homeViewModel.tracksByStyle, playerViewModel) }) {
             Icon(imageVector = Icons.Default.PlayArrow, contentDescription = "Play", tint = Color.White)
         }
 
@@ -215,256 +215,318 @@ fun PopularTrackItem(music: MusicTrack) {
 
         IconButton(onClick = {
             try {
-                vm.addMusic(music)
-                if (vm.getUser() != null) vm.addToLiked(music.id)
+                libraryViewModel.addMusic(music)
+                if (libraryViewModel.getUser() != null) libraryViewModel.addToLiked(music.id)
             } catch (_: Exception) {}
         }) {
             Icon(imageVector = Icons.Default.Favorite, contentDescription = "Like", tint = Color(0xFFEE82FF))
         }
 
-        val menuExpanded = remember { mutableStateOf(false) }
-        val showPlaylistPickerFor = remember { mutableStateOf<String?>(null) }
-        val downloadState = remember(music.id) { mutableStateOf<DownloadEntity?>(null) }
+        MusicOptionsMenu(music, libraryViewModel, context, coroutineScope)
+    }
+}
 
-        LaunchedEffect(music.id) {
-            val store = DownloadStore(context)
-            val start = System.currentTimeMillis()
-            val timeout = 60_000L
-            while (System.currentTimeMillis() - start < timeout) {
-                val d = store.getById(music.id)
-                downloadState.value = d
-                if (d != null && (d.status == "DONE" || d.status == "FAILED")) break
-                delay(700)
-            }
-            downloadState.value = DownloadStore(context).getById(music.id)
+@Composable
+fun MusicOptionsMenu(
+    music: MusicTrack,
+    libraryViewModel: LibraryViewModel,
+    context: Context,
+    coroutineScope: CoroutineScope
+) {
+
+    val menuExpanded = remember { mutableStateOf(false) }
+    val showPlaylistPickerFor = remember { mutableStateOf<String?>(null) }
+    val downloadState = remember(music.id) { mutableStateOf<DownloadEntity?>(null) }
+
+    LaunchedEffect(music.id) {
+        val store = DownloadStore(context)
+        val start = System.currentTimeMillis()
+        val timeout = 60_000L
+
+        while (System.currentTimeMillis() - start < timeout) {
+            val d = store.getById(music.id)
+            downloadState.value = d
+            if (d != null && (d.status == "DONE" || d.status == "FAILED")) break
+            kotlinx.coroutines.delay(700)
         }
 
-        val ds = downloadState.value
+        downloadState.value = store.getById(music.id)
+    }
 
-        Box(modifier = Modifier.clickable { menuExpanded.value = true }) {
-            when (ds?.status) {
-                "DOWNLOADING" -> {
-                    val pf = (ds.progress.coerceIn(0, 100)) / 100f
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator(
-                            progress = { pf },
-                            modifier = Modifier.size(28.dp),
-                            color = MaterialTheme.colorScheme.secondary,
-                            strokeWidth = 2.dp,
-                            trackColor = ProgressIndicatorDefaults.circularIndeterminateTrackColor,
-                            strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "${ds.progress}%",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                }
-                "DONE" -> {
-                    Icon(
-                        imageVector = Icons.Default.Download,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.secondary
+    val ds = downloadState.value
+
+    Box(modifier = Modifier.clickable { menuExpanded.value = true }) {
+
+        when (ds?.status) {
+
+            "DOWNLOADING" -> {
+                val pf = (ds.progress.coerceIn(0, 100)) / 100f
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(
+                        progress = { pf },
+                        modifier = Modifier.size(28.dp),
+                        color = MaterialTheme.colorScheme.secondary,
+                        strokeWidth = 2.dp
                     )
+                    Spacer(Modifier.height(2.dp))
+                    Text("${ds.progress}%")
                 }
-                else -> {
-                    IconButton(onClick = { menuExpanded.value = true }, modifier = Modifier.size(36.dp)) {
-                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.White)
-                    }
+            }
+
+            "DONE" -> {
+                Icon(
+                    imageVector = Icons.Default.Download,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.secondary
+                )
+            }
+
+            else -> {
+                IconButton(
+                    onClick = { menuExpanded.value = true },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
                 }
             }
         }
+    }
 
-        DropdownMenu(
-            expanded = menuExpanded.value,
-            onDismissRequest = { menuExpanded.value = false }
-        ) {
-            DropdownMenuItem(
-                text = { Text("Ajouter à une playlist") },
-                    onClick = {
-                        menuExpanded.value = false
-                        showPlaylistPickerFor.value = music.id
-                    },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            )
-            DropdownMenuItem(
-                text = { Text("Ajouter aux favoris") },
-                onClick = {
-                    menuExpanded.value = false
-                    try {
-                        vm.addMusic(music)
-                        if (vm.getUser() != null) vm.addToLiked(music.id)
-                    } catch (_: Exception) {}
-                    Toast.makeText(context, "Ajouté aux favoris", Toast.LENGTH_SHORT).show()
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Favorite,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                }
-            )
-            DropdownMenuItem(
-                text = { Text("Télécharger") },
-                onClick = {
-                    menuExpanded.value = false
-                    coroutineScope.launch {
-                        try {
-                            val store = DownloadStore(context)
-                            store.upsert(DownloadEntity(trackId = music.id, title = music.title, localPath = null, status = "DOWNLOADING", progress = 0))
-                        } catch (_: Exception) {}
-                    }
+    DropdownMenu(
+        expanded = menuExpanded.value,
+        onDismissRequest = { menuExpanded.value = false }
+    ) {
 
-                    val data = workDataOf(
-                        "trackId" to music.id,
-                        "audioUrl" to music.audioUrl,
-                        "title" to music.title
-                    )
-                    val request = OneTimeWorkRequestBuilder<com.example.soundwave.data.worker.DownloadWorker>()
-                        .setInputData(data)
-                        .build()
-                    WorkManager.getInstance(context).enqueue(request)
-                    Toast.makeText(context, "Téléchargement lancé", Toast.LENGTH_SHORT).show()
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Download,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.secondary
+        DropdownMenuItem(
+            text = { Text("Ajouter à une playlist") },
+            onClick = {
+                menuExpanded.value = false
+                showPlaylistPickerFor.value = music.id
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        )
+
+        DropdownMenuItem(
+            text = { Text("Ajouter aux favoris") },
+            onClick = {
+                menuExpanded.value = false
+                libraryViewModel.addMusic(music)
+                libraryViewModel.getUser()?.let { libraryViewModel.addToLiked(music.id) }
+                Toast.makeText(context, "Ajouté aux favoris", Toast.LENGTH_SHORT).show()
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Favorite,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+        )
+
+        DropdownMenuItem(
+            text = { Text("Télécharger") },
+            onClick = {
+                menuExpanded.value = false
+
+                coroutineScope.launch {
+                    DownloadStore(context).upsert(
+                        DownloadEntity(
+                            trackId = music.id,
+                            title = music.title,
+                            localPath = null,
+                            status = "DOWNLOADING",
+                            progress = 0
+                        )
                     )
                 }
-            )
-            DropdownMenuItem(
-                text = { Text("Partager") },
-                onClick = {
-                    menuExpanded.value = false
-                    coroutineScope.launch {
-                        try {
-                            val store = DownloadStore(context)
-                            val download = withContext(kotlinx.coroutines.Dispatchers.IO) { store.getById(music.id) }
-                            if (download?.localPath != null) {
-                                val file = java.io.File(download.localPath)
-                                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-                                val share = Intent(Intent.ACTION_SEND).apply {
-                                    type = "audio/*"
-                                    putExtra(Intent.EXTRA_STREAM, uri)
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-                                context.startActivity(Intent.createChooser(share, "Partager la piste"))
-                            } else {
-                                val shareText = "${music.title}\n${music.audioUrl}"
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(Intent.EXTRA_SUBJECT, music.title)
-                                    putExtra(Intent.EXTRA_TEXT, shareText)
-                                }
-                                context.startActivity(Intent.createChooser(shareIntent, "Partager via"))
-                            }
-                        } catch (e: Exception) {
-                            Toast.makeText(context, "Impossible d'ouvrir le partage", Toast.LENGTH_SHORT).show()
+
+                val request = OneTimeWorkRequestBuilder<DownloadWorker>()
+                    .setInputData(
+                        workDataOf(
+                            "trackId" to music.id,
+                            "audioUrl" to music.audioUrl,
+                            "title" to music.title
+                        )
+                    )
+                    .build()
+
+                WorkManager.getInstance(context).enqueue(request)
+
+                Toast.makeText(context, "Téléchargement lancé", Toast.LENGTH_SHORT).show()
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Download,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.secondary
+                )
+            }
+        )
+
+        DropdownMenuItem(
+            text = { Text("Partager") },
+            onClick = {
+                menuExpanded.value = false
+
+                coroutineScope.launch {
+                    val store = DownloadStore(context)
+                    val download = store.getById(music.id)
+
+                    if (download?.localPath != null) {
+                        val file = java.io.File(download.localPath)
+                        val uri = FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            file
+                        )
+
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "audio/*"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
+
+                        context.startActivity(Intent.createChooser(intent, "Partager"))
+                    } else {
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, "${music.title}\n${music.audioUrl}")
+                        }
+
+                        context.startActivity(Intent.createChooser(intent, "Partager via"))
                     }
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
                 }
-            )
-        }
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
+            }
+        )
+    }
 
-        val createViewModel: CreateViewModel = viewModel()
-        val showCreatePlaylist = remember { mutableStateOf(false) }
-        var newPlaylistTitle by remember { mutableStateOf("") }
-        val playlistsView by vm.playlistViewsState
+    PlaylistDialogs(music, libraryViewModel, context, showPlaylistPickerFor)
+}
 
-        if (showPlaylistPickerFor.value != null) {
-            AlertDialog(
-                onDismissRequest = { showPlaylistPickerFor.value = null },
-                title = { Text("Ajouter à la playlist") },
-                text = {
-                    Column {
-                        playlistsView.forEach { p ->
-                            Row(modifier = Modifier
+@Composable
+fun PlaylistDialogs(
+    music: MusicTrack,
+    libraryViewModel: LibraryViewModel,
+    context: Context,
+    showPlaylistPickerFor: MutableState<String?>
+) {
+
+    val createViewModel: CreateViewModel = viewModel()
+    val showCreatePlaylist = remember { mutableStateOf(false) }
+    var newPlaylistTitle by remember { mutableStateOf("") }
+    val playlistsView by libraryViewModel.playlistViewsState
+
+    if (showPlaylistPickerFor.value != null) {
+        AlertDialog(
+            onDismissRequest = { showPlaylistPickerFor.value = null },
+            title = { Text("Ajouter à la playlist") },
+            text = {
+                Column {
+                    playlistsView.forEach { p ->
+                        Row(
+                            modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    // add to local collection and to server
-                                    vm.addMusic(music)
-                                    vm.addTrackToPlaylistServer(p.id, music.id) { success ->
-                                        if (success) Toast.makeText(context, "Ajouté à ${p.title}", Toast.LENGTH_SHORT).show()
-                                        else Toast.makeText(context, "Erreur lors de l'ajout", Toast.LENGTH_SHORT).show()
+                                    libraryViewModel.addMusic(music)
+                                    libraryViewModel.addTrackToPlaylistServer(p.id, music.id) { success ->
+                                        if (success) {
+                                            Toast.makeText(context, "Ajouté à ${p.title}", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            Toast.makeText(context, "Erreur lors de l'ajout", Toast.LENGTH_SHORT).show()
+                                        }
                                     }
                                     showPlaylistPickerFor.value = null
                                 }
-                                .padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = p.title, modifier = Modifier.weight(1f))
-                                val count = vm.getPlaylistTrackCount(p.id)
-                                Text(text = "$count tracks", color = Color.Gray)
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                            Button(onClick = { showCreatePlaylist.value = true }) {
-                                Text("Créer nouvelle playlist")
-                            }
+                                .padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = p.title, modifier = Modifier.weight(1f))
+                            val count = libraryViewModel.getPlaylistTrackCount(p.id)
+                            Text(text = "$count tracks", color = Color.Gray)
                         }
                     }
-                },
-                confirmButton = {},
-                dismissButton = {
-                    Button(onClick = { showPlaylistPickerFor.value = null }) { Text("Fermer") }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Button(onClick = { showCreatePlaylist.value = true }) {
+                            Text("Créer nouvelle playlist")
+                        }
+                    }
                 }
-            )
-        }
+            },
+            confirmButton = {},
+            dismissButton = {
+                Button(onClick = { showPlaylistPickerFor.value = null }) {
+                    Text("Fermer")
+                }
+            }
+        )
+    }
 
-        if (showCreatePlaylist.value) {
-            AlertDialog(
-                onDismissRequest = { showCreatePlaylist.value = false },
-                title = { Text("Créer une playlist") },
-                text = {
-                    Column {
-                        OutlinedTextField(value = newPlaylistTitle, onValueChange = { newPlaylistTitle = it }, label = { Text("Nom de la playlist") })
-                    }
-                },
-                confirmButton = {
-                    Button(onClick = {
-                        val tid = showPlaylistPickerFor.value
-                        if (!newPlaylistTitle.isBlank()) {
-                            coroutineScope.launch {
-                                val newId = createViewModel.createPlaylistOnServer(newPlaylistTitle)
-                                if (newId != null) {
-                                    if (tid != null) {
-                                        // use the music currently in scope
-                                        createViewModel.addMusic(music)
-                                        vm.addTrackToPlaylistServer(newId, tid) {}
-                                    }
-
-                                    Toast.makeText(context, "Playlist créée", Toast.LENGTH_SHORT).show()
-                                } else {
-                                    Toast.makeText(context, "Impossible de créer la playlist", Toast.LENGTH_SHORT).show()
+    if (showCreatePlaylist.value) {
+        AlertDialog(
+            onDismissRequest = { showCreatePlaylist.value = false },
+            title = { Text("Créer une playlist") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = newPlaylistTitle,
+                        onValueChange = { newPlaylistTitle = it },
+                        label = { Text("Nom de la playlist") }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    val tid = showPlaylistPickerFor.value
+                    if (!newPlaylistTitle.isBlank()) {
+                        CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                            val newId = createViewModel.createPlaylistOnServer(newPlaylistTitle)
+                            if (newId != null) {
+                                if (tid != null) {
+                                    createViewModel.addMusic(music)
+                                    libraryViewModel.addTrackToPlaylistServer(newId, tid) {}
                                 }
-                                newPlaylistTitle = ""
-                                showCreatePlaylist.value = false
-                                showPlaylistPickerFor.value = null
+                                Toast.makeText(context, "Playlist créée", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Impossible de créer la playlist", Toast.LENGTH_SHORT).show()
                             }
+                            newPlaylistTitle = ""
+                            showCreatePlaylist.value = false
+                            showPlaylistPickerFor.value = null
                         }
-                    }) { Text("Créer") }
-                },
-                dismissButton = {
-                    Button(onClick = { showCreatePlaylist.value = false }) { Text("Annuler") }
+                    }
+                }) {
+                    Text("Créer")
                 }
-            )
-        }
+            },
+            dismissButton = {
+                Button(onClick = { showCreatePlaylist.value = false }) {
+                    Text("Annuler")
+                }
+            }
+        )
     }
 }

@@ -29,4 +29,12 @@ object AppEvents {
     fun tryEmitLibraryLoad() {
         _libraryLoadTrigger.tryEmit(Unit)
     }
+
+    // emit when a track's metadata (e.g., duration) has been updated while playing
+    private val _trackMetadataUpdated = MutableSharedFlow<MusicTrack>(extraBufferCapacity = 1)
+    val trackMetadataUpdated = _trackMetadataUpdated.asSharedFlow()
+
+    fun tryEmitTrackMetadataUpdated(track: MusicTrack) {
+        _trackMetadataUpdated.tryEmit(track)
+    }
 }

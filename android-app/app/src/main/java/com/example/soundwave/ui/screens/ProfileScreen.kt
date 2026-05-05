@@ -381,6 +381,7 @@ fun StatsSection(userId: String?) {
         if (userId != null) {
             vm.loadGenerated()
             vm.loadPlaylists()
+            vm.loadLikedForCurrentUser()
         }
     }
     val generatedCount = if (userId != null) vm.generatedList.count() else 0

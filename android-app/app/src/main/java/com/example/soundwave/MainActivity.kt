@@ -42,6 +42,9 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
+    // expose application context for lightweight local stores
+        AppContext.context = applicationContext
+
         splash.setKeepOnScreenCondition {
             !mainVM.isReady.value
         }

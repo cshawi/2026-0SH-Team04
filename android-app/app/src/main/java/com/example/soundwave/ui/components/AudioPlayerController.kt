@@ -106,6 +106,27 @@ object AudioPlayerController {
                     durationMs = 0L
                     positionMs = 0L
                 }
+                // If we have a current track and a PlayerViewModel reference, sync the in-memory
+                // track.duration with the observed player duration (converted to seconds) so
+                // UI components reading track.duration show the correct value.
+                try {
+                    val cur = currentTrack
+                    if (cur != null && durationMs > 0L && lastPlayerViewModel != null) {
+                        val observedSeconds = (durationMs / 1000L).toInt()
+                        // update the PlayerViewModel's currentTrack if it differs
+                        val vmCur = lastPlayerViewModel?.currentTrack
+                        if (vmCur != null && vmCur.id == cur.id && vmCur.duration != observedSeconds) {
+                            lastPlayerViewModel?.currentTrack = vmCur.copy(duration = observedSeconds)
+                            // emit an application-wide event so other ViewModels (e.g., LibraryViewModel)
+                            // can update their in-memory lists to reflect the corrected duration
+                            try {
+                                com.example.soundwave.events.AppEvents.tryEmitTrackMetadataUpdated(vmCur.copy(duration = observedSeconds))
+                            } catch (_: Exception) {}
+                        }
+                    }
+                } catch (_: Exception) {
+                    // ignore any issues updating the ViewModel
+                }
                 // detect when current track changes and reset per-track emitted flags
                 val current = currentTrack
                 if (current?.id != prevTrackId) {

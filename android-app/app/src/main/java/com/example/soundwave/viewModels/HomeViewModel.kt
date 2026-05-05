@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.viewModelScope
 import com.example.soundwave.events.AppEvents
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import com.example.soundwave.models.MusicTrack
 import com.example.soundwave.data.TestDataProvider
 import com.example.soundwave.data.repository.TrackRepository
@@ -36,7 +36,7 @@ class HomeViewModel : BaseViewModel() {
     private val trackRepository = TrackRepository()
 
     // Styles / genres fetched from server
-    val styles: kotlin.collections.MutableList<String> = mutableListOf()
+    val styles: MutableList<String> = mutableListOf()
 
     fun loadStyles(limit: Int = 50) {
         viewModelScope.launch {
@@ -136,6 +136,43 @@ class HomeViewModel : BaseViewModel() {
                 refreshRecommendations()
             }
         }
+
+        // update in-memory lists when a track's metadata is corrected by the player
+        viewModelScope.launch {
+            AppEvents.trackMetadataUpdated.collectLatest { updated ->
+                try {
+                    // recommendationList
+                    val idxRec = recommendationList.indexOfFirst { it.id == updated.id }
+                    if (idxRec >= 0) {
+                        val ex = recommendationList[idxRec]
+                        if (ex.duration != updated.duration) recommendationList[idxRec] = ex.copy(duration = updated.duration)
+                    }
+
+                    // discoverList
+                    val idxDisc = discoverList.indexOfFirst { it.id == updated.id }
+                    if (idxDisc >= 0) {
+                        val ex = discoverList[idxDisc]
+                        if (ex.duration != updated.duration) discoverList[idxDisc] = ex.copy(duration = updated.duration)
+                    }
+
+                    // searchResults
+                    val idxSearch = searchResults.indexOfFirst { it.id == updated.id }
+                    if (idxSearch >= 0) {
+                        val ex = searchResults[idxSearch]
+                        if (ex.duration != updated.duration) searchResults[idxSearch] = ex.copy(duration = updated.duration)
+                    }
+
+                    // tracksByStyle
+                    val idxStyle = tracksByStyle.indexOfFirst { it.id == updated.id }
+                    if (idxStyle >= 0) {
+                        val ex = tracksByStyle[idxStyle]
+                        if (ex.duration != updated.duration) tracksByStyle[idxStyle] = ex.copy(duration = updated.duration)
+                    }
+                } catch (_: Exception) {
+                    // ignore
+                }
+            }
+        }
     }
 
     // Public helper to be called from UI or events. Non-suspending: launches in viewModelScope
@@ -165,7 +202,7 @@ class HomeViewModel : BaseViewModel() {
                     try {
                         MusicTrack.fromDto(item.track)
                     } catch (e: Exception) {
-                        Log.d("HomeViewModel", "${e}")
+                        Log.d("HomeViewModel", "$e")
                         null
                     }
                 }

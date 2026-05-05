@@ -8,13 +8,15 @@ import androidx.lifecycle.viewModelScope
 import com.example.soundwave.data.TestDataProvider.likedMusic
 import com.example.soundwave.data.TestDataProvider.likedMusics
 import com.example.soundwave.data.TestDataProvider.musics
+import com.example.soundwave.data.local.LikedTrackEntity
 import com.example.soundwave.data.remote.dto.playlist.PlaylistDto
 import com.example.soundwave.data.repository.TrackRepository
+import com.example.soundwave.events.AppEvents
+import com.example.soundwave.events.AppEvents.trackMetadataUpdated
 import com.example.soundwave.models.MusicTrack
 import com.example.soundwave.models.PlaylistView
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
-import com.example.soundwave.events.AppEvents
+import kotlinx.coroutines.launch
 
 data class PlaylistItem(val title: String, val trackCount: Int)
 data class AlbumItem(val title: String, val subtitle: String)
@@ -23,7 +25,19 @@ class LibraryViewModel : BaseViewModel() {
 
     private val trackRepository = TrackRepository()
     private val playlistRepository = com.example.soundwave.data.repository.PlaylistRepository()
+    // initialize a compat store: try Room-backed store if AppContext and Room are available; else fallback to file store
+    private val likedStoreCompat = try {
+        val ctx = com.example.soundwave.AppContext.context
+        val room = try { com.example.soundwave.data.local.LikedTrackStore(ctx) } catch (_: Exception) { null }
+        val file = try { com.example.soundwave.data.local.LikedTrackFileStore(ctx) } catch (_: Exception) { null }
+        com.example.soundwave.data.local.LikedTrackStoreCompat(room = room, file = file)
+    } catch (_: Throwable) {
+        // Last-resort: no context available
+        com.example.soundwave.data.local.LikedTrackStoreCompat(null, null)
+    }
     val generatedList: SnapshotStateList<MusicTrack> = mutableStateListOf()
+    // persisted liked tracks per connected user
+    val likedTracks: SnapshotStateList<MusicTrack> = mutableStateListOf()
 
     fun loadGenerated() {
         viewModelScope.launch {
@@ -48,17 +62,146 @@ class LibraryViewModel : BaseViewModel() {
             AppEvents.libraryLoadTrigger.collectLatest {
                 loadPlaylists()
                 loadGenerated()
+                loadLikedForCurrentUser()
+            }
+        }
+
+        // listen for metadata-updated events (e.g., duration discovered by player) and
+        // update our in-memory lists so the corrected duration persists in UI
+        viewModelScope.launch {
+            trackMetadataUpdated.collectLatest { updated ->
+                try {
+                    // update generatedList
+                    val genIdx = generatedList.indexOfFirst { it.id == updated.id }
+                    if (genIdx >= 0) {
+                        val existing = generatedList[genIdx]
+                        if (existing.duration != updated.duration) {
+                            generatedList[genIdx] = existing.copy(duration = updated.duration)
+                        }
+                    }
+
+                    // update likedTracks
+                    val likedIdx = likedTracks.indexOfFirst { it.id == updated.id }
+                    if (likedIdx >= 0) {
+                        val existing = likedTracks[likedIdx]
+                        if (existing.duration != updated.duration) {
+                            likedTracks[likedIdx] = existing.copy(duration = updated.duration)
+                        }
+                    }
+
+                    // update serverPlaylists cache where tracks are derived -> update PlaylistDto entries if present
+                    // This only updates our in-memory mapping used for playlistViews; if needed, next loadPlaylists will refresh.
+                    for (i in serverPlaylists.indices) {
+                        val p = serverPlaylists[i]
+                        if (!p.tracks.isNullOrEmpty()) {
+                            val idx = p.tracks.indexOfFirst { it.id == updated.id }
+                            if (idx >= 0) {
+                                val t = p.tracks[idx]
+                                val newTrackDto = t.copy(duration = updated.duration.toDouble())
+                                val newTracks = p.tracks.toMutableList()
+                                newTracks[idx] = newTrackDto
+                                serverPlaylists[i] = p.copy(tracks = newTracks)
+                            }
+                        }
+                    }
+                } catch (_: Exception) {
+                    // be defensive and ignore issues here
+                }
             }
         }
     }
 
     fun likedMusicsUser() : List<MusicTrack>{
+        // prefer persisted liked tracks if available
+        if (likedTracks.isNotEmpty()) return likedTracks.toList()
         val user = getUser() ?: return emptyList()
         return musics.filter { likedMusic(it.id, user.id) in likedMusics }
     }
 
     fun likedCountForUser(): Int{
         return likedMusicsUser().size
+    }
+
+    private fun musicTrackToEntity(track: MusicTrack, userId: String) : LikedTrackEntity {
+        return LikedTrackEntity(
+            id = track.id,
+            title = track.title,
+            styleName = track.styleName,
+            duration = track.duration,
+            createdAt = track.createdAt,
+            audioUrl = track.audioUrl,
+            coverUrl = track.coverUrl,
+            lyrics = track.lyrics,
+            username = track.username,
+            userId = userId
+        )
+    }
+
+    fun loadLikedForCurrentUser() {
+
+        val user = getUser()
+        Log.d("LVVM", "loadLikedForCurrentUser called, user=$user")
+        if (user == null) {
+            Log.d("LVVM", "no user - aborting loadLikedForCurrentUser")
+            return
+        }
+
+        viewModelScope.launch {
+            Log.d("LVVM", "loading liked tracks for userId=${user.id}")
+            try {
+                val entities = likedStoreCompat.getForUser(user.id)
+
+                likedTracks.clear()
+                likedTracks.addAll(entities.mapNotNull { e ->
+                    try {
+                        MusicTrack(
+                            id = e.id,
+                            title = e.title,
+                            styleName = e.styleName,
+                            duration = e.duration,
+                            createdAt = e.createdAt,
+                            audioUrl = e.audioUrl,
+                            coverUrl = e.coverUrl,
+                            lyrics = e.lyrics,
+                            username = e.username
+                        )
+                    } catch (ex: Exception) {
+                        Log.w("LVVM", "mapping entity->MusicTrack failed: ${ex.message}")
+                        null
+                    }
+                })
+                Log.d("LVVM", "likedTracks populated: ${likedTracks.size}")
+            } catch (e: Exception) {
+                Log.w("LVVM", "loadLikedForCurrentUser error: ${e.message}")
+            }
+        }
+    }
+
+    fun persistLike(track: MusicTrack) {
+        val user = getUser() ?: return
+
+        viewModelScope.launch {
+            try {
+                likedStoreCompat.upsert(musicTrackToEntity(track, user.id))
+                Log.d("LVVM", "upsert complete for track=${track.id} userId=${user.id}")
+                // keep in-memory list in sync
+                if (likedTracks.none { it.id == track.id }) {
+                    likedTracks.add(track)
+                }
+            } catch (e: Exception) {
+                Log.w("LVVM", "persistLike error: ${e.message}")
+            }
+        }
+    }
+
+    fun persistUnlike(trackId: String) {
+        val user = getUser() ?: return
+        viewModelScope.launch {
+            try {
+                likedStoreCompat.deleteByIdForUser(trackId, user.id)
+                likedTracks.removeAll { it.id == trackId }
+            } catch (_: Exception) {}
+        }
     }
 
     // make serverPlaylists observable so Compose recomposes when it changes

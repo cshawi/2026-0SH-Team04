@@ -78,6 +78,7 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0")
     implementation(libs.core.splashscreen)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.room3.runtime)
 
 
 

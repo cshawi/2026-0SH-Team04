@@ -210,13 +210,17 @@ fun PopularTrackItem(music: MusicTrack, homeViewModel: HomeViewModel) {
         Column(modifier = Modifier.weight(1f)) {
             Text(text = music.title, color = Color.White, style = MaterialTheme.typography.bodyLarge)
             Text(text = music.username ?: "AI", color = Color(0xFFB0B0C2), style = MaterialTheme.typography.bodySmall)
-            Text(text = TimeUtils.formatSecondsToMMSS(music.duration), color = Color(0xFF777788), style = MaterialTheme.typography.bodySmall)
+            val displayDuration = if (AudioPlayerController.currentId == music.id && AudioPlayerController.durationMs > 0L) {
+                (AudioPlayerController.durationMs / 1000L).toInt()
+            } else music.duration
+
+            Text(text = TimeUtils.formatSecondsToMMSS(displayDuration), color = Color(0xFF777788), style = MaterialTheme.typography.bodySmall)
         }
 
         IconButton(onClick = {
             try {
                 libraryViewModel.addMusic(music)
-                if (libraryViewModel.getUser() != null) libraryViewModel.addToLiked(music.id)
+                if (libraryViewModel.getUser() != null) libraryViewModel.persistLike(music)
             } catch (_: Exception) {}
         }) {
             Icon(imageVector = Icons.Default.Favorite, contentDescription = "Like", tint = Color(0xFFEE82FF))
@@ -322,7 +326,7 @@ fun MusicOptionsMenu(
             onClick = {
                 menuExpanded.value = false
                 libraryViewModel.addMusic(music)
-                libraryViewModel.getUser()?.let { libraryViewModel.addToLiked(music.id) }
+                libraryViewModel.getUser()?.let { libraryViewModel.persistLike(music) }
                 Toast.makeText(context, "Ajouté aux favoris", Toast.LENGTH_SHORT).show()
             },
             leadingIcon = {

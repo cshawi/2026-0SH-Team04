@@ -325,8 +325,12 @@ fun MusicCard(music: MusicTrack, parentList: List<MusicTrack>, playerViewModel: 
 
             Spacer(modifier = Modifier.width(8.dp))
 
+            val displayDuration = if (AudioPlayerController.currentId == music.id && AudioPlayerController.durationMs > 0L) {
+                (AudioPlayerController.durationMs / 1000L).toInt()
+            } else music.duration
+
             Text(
-                text = TimeUtils.formatSecondsToMMSS(music.duration),
+                text = TimeUtils.formatSecondsToMMSS(displayDuration),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.LightGray
             )
@@ -398,8 +402,12 @@ fun DiscoverItem(music: MusicTrack, parentList: List<MusicTrack>, navController:
                 style = MaterialTheme.typography.bodyLarge
             )
 
+            val displayDuration2 = if (AudioPlayerController.currentId == music.id && AudioPlayerController.durationMs > 0L) {
+                (AudioPlayerController.durationMs / 1000L).toInt()
+            } else music.duration
+
             Text(
-                text = TimeUtils.formatSecondsToMMSS(music.duration),
+                text = TimeUtils.formatSecondsToMMSS(displayDuration2),
                 color = Color(0xFFA0A0B5),
                 style = MaterialTheme.typography.bodySmall
             )

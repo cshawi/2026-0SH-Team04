@@ -1,6 +1,5 @@
 package com.example.soundwave.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -65,7 +64,9 @@ fun LibraryScreen(vm: LibraryViewModel = viewModel()) {
 
     val playlists by vm.playlistItemsState
     val playlistViews by vm.playlistViewsState
-    val likedMusicsUser = vm.likedMusicsUser()
+    // use the ViewModel's SnapshotStateList directly so Compose will recompose
+    // when liked tracks are added/removed
+    val likedMusicsUser = vm.likedTracks
     val playerViewModel: PlayerViewModel = viewModel(LocalActivity.current)
 
     val expanded = remember { mutableStateMapOf<String, Boolean>() }
@@ -85,8 +86,9 @@ fun LibraryScreen(vm: LibraryViewModel = viewModel()) {
                 .verticalScroll(rememberScrollState())
         ) {
 
-            LaunchedEffect(Unit) { vm.loadPlaylists()
-                Log.d("LScreen", playlists.toString())
+            LaunchedEffect(Unit) {
+                vm.loadPlaylists()
+                vm.loadLikedForCurrentUser()
             }
 
             Row(
@@ -162,7 +164,12 @@ fun LibraryScreen(vm: LibraryViewModel = viewModel()) {
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(text = track.title, color = Color.White)
-                                Text(text = TimeUtils.formatSecondsToMMSS(track.duration), color = Color(0xFFB0B0C2), fontSize = 12.sp)
+                                // prefer the player's observed duration (in case metadata is stale)
+                                val displayDurationSeconds = if (AudioPlayerController.currentId == track.id && AudioPlayerController.durationMs > 0L) {
+                                    (AudioPlayerController.durationMs / 1000L).toInt()
+                                } else track.duration
+
+                                Text(text = TimeUtils.formatSecondsToMMSS(displayDurationSeconds), color = Color(0xFFB0B0C2), fontSize = 12.sp)
                             }
 
                             IconButton(onClick = {
@@ -241,7 +248,11 @@ fun LibraryScreen(vm: LibraryViewModel = viewModel()) {
 
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(text = track.title, color = Color.White)
-                                            Text(text = TimeUtils.formatSecondsToMMSS(track.duration), color = Color(0xFFB0B0C2), fontSize = 12.sp)
+                                            val displayDurationSeconds2 = if (AudioPlayerController.currentId == track.id && AudioPlayerController.durationMs > 0L) {
+                                                (AudioPlayerController.durationMs / 1000L).toInt()
+                                            } else track.duration
+
+                                            Text(text = TimeUtils.formatSecondsToMMSS(displayDurationSeconds2), color = Color(0xFFB0B0C2), fontSize = 12.sp)
                                         }
 
                                         IconButton(onClick = {
@@ -323,15 +334,31 @@ fun MusicListItem(track: MusicTrack, libraryViewModel: LibraryViewModel, onPlay:
             }
 
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(text = TimeUtils.formatSecondsToMMSS(track.duration), color = Color(0xFFB0B0C2), fontSize = 12.sp)
+                    val displayDurationSeconds3 = if (AudioPlayerController.currentId == track.id && AudioPlayerController.durationMs > 0L) {
+                        (AudioPlayerController.durationMs / 1000L).toInt()
+                    } else track.duration
+
+                    Text(text = TimeUtils.formatSecondsToMMSS(displayDurationSeconds3), color = Color(0xFFB0B0C2), fontSize = 12.sp)
                     Row {
+                        // heart button: white when not liked, purple when liked
+                        val isLiked = libraryViewModel.likedTracks.any { it.id == track.id }
                         IconButton(onClick = {
                             try {
-                                libraryViewModel.addMusic(track)
-                                if (libraryViewModel.getUser() != null) libraryViewModel.addToLiked(track.id)
+                                if (!isLiked) {
+                                    // add then persist
+                                    libraryViewModel.addMusic(track)
+                                    if (libraryViewModel.getUser() != null) libraryViewModel.persistLike(track)
+                                } else {
+                                    // remove persisted like
+                                    if (libraryViewModel.getUser() != null) libraryViewModel.persistUnlike(track.id)
+                                }
                             } catch (_: Exception) {}
                         }) {
-                            Icon(imageVector = Icons.Default.Favorite, contentDescription = "Like", tint = Color(0xFFB65EFF))
+                            Icon(
+                                imageVector = Icons.Default.Favorite,
+                                contentDescription = "Like",
+                                tint = if (isLiked) Color(0xFFB65EFF) else Color.White
+                            )
                         }
 
                         MusicOptionsMenu(track, libraryViewModel, context, coroutineScope)

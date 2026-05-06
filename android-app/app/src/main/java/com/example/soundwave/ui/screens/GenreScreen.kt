@@ -222,8 +222,26 @@ fun PopularTrackItem(music: MusicTrack, homeViewModel: HomeViewModel) {
                 libraryViewModel.addMusic(music)
                 if (libraryViewModel.getUser() != null) libraryViewModel.persistLike(music)
             } catch (_: Exception) {}
-        }) {
-            Icon(imageVector = Icons.Default.Favorite, contentDescription = "Like", tint = Color(0xFFEE82FF))
+            }) {
+                val isLiked = libraryViewModel.likedTracks.any { it.id == music.id }
+                IconButton(onClick = {
+                    try {
+                        if (!isLiked) {
+                            // add then persist
+                            libraryViewModel.addMusic(music)
+                            if (libraryViewModel.getUser() != null) libraryViewModel.persistLike(music)
+                        } else {
+                            // remove persisted like
+                            if (libraryViewModel.getUser() != null) libraryViewModel.persistUnlike(music.id)
+                        }
+                    } catch (_: Exception) {}
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = "Like",
+                        tint = if (isLiked) Color(0xFFB65EFF) else Color.White
+                    )
+                }
         }
 
         MusicOptionsMenu(music, libraryViewModel, context, coroutineScope)

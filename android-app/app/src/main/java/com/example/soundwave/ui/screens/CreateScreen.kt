@@ -1,5 +1,6 @@
 package com.example.soundwave.ui.screens
 
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -643,6 +644,8 @@ fun CreateScreen(navController: NavController, createViewModel: CreateViewModel 
             LaunchedEffect(generationResult) {
                 if (generationResult != null) {
                     resultsBringIntoViewRequester.bringIntoView()
+                    Toast.makeText(context, "Musique créée avec success", Toast.LENGTH_SHORT).show()
+                    navController.navigate(Screen.Create.route)
                 }
             }
 

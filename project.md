@@ -110,7 +110,7 @@ Processus :
 
 ### 3.6 Performance
 
-- Temps cible de génération : moins de 30 secondes.
+- Temps cible de génération : moins de 3 minutes.
 - Requêtes réseau asynchrones (OkHttp/Retrofit).
 - Indicateur de chargement pendant la génération.
 - Possibilité de mise en cache locale des fichiers récents.
@@ -185,21 +185,10 @@ Permettre à un utilisateur de :
 
 ---
 
-### Administrateur
-
-**Objectif :** superviser l’utilisation de l’API et gérer les utilisateurs.
-
-**Actions :**
-
-- Voir le nombre de générations par utilisateur
-- Suspendre ou supprimer un compte
-- Consulter les statistiques d’utilisation
-
----
 
 ## 4.4 Objectifs
 
-1. Générer une musique en moins de 30 secondes.
+1. Générer une musique en moins de 3 minutes.
 2. Assurer une disponibilité du service 24/7.
 3. Permettre le téléchargement en format MP3 ou WAV.
 4. Offrir une interface simple et intuitive.
@@ -383,44 +372,65 @@ Permettre à un utilisateur de :
 
 ## 4.12 Liste et modélisation des entités
 
+### Liste des entités
+
 - **User**
   - id
-  - name
+  - username
   - email
   - password
   - avatarUrl
+  - playlists[]
+  - createdAt
+  - updatedAt
 
-
-<!-- En réflexion -->
-  <!-- - quota
-  - role -->
 
 - **Track**
   - id
   - title
-  - styleName
+  - style
   - duration
   - createdAt
   - audioUrl
   - coverUrl
   - description
   - lyrics
+  - userId
+  - publitio_id
+  - updatedAt
 
 - **Playlist**
   - id
   - name
   - createdAt
-  - userId
-  - generation_ids[]
+  - updatedAt
+  - track_ids[]
 
 - **Play**
   - id
-  - playedAt
+  - createdAt
+  - updatedAt
   - progression
   - user_id
   - track_id
   
-  
+- ***Job**
+  - id
+  - taskId
+  - userId
+  - status
+  - callbackSecret
+  - requestPayload
+  - tracks[]
+  - publitio
+  - rawResponse
+  - error
+  - createdAt
+  - updatedAt
+
+### Modèle du domaine
+
+![modele](modele.png)
 
 ---
 
